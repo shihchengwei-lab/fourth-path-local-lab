@@ -48,6 +48,7 @@ CAPABILITY_DEV_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v14_planning_diversity", "data/main_agent_v14_planning_diversity_seed_20260505.jsonl", 24, 5),
     ("v15_visible_constraint_repair", "data/main_agent_v15_visible_constraint_repair_seed_20260505.jsonl", 24, 4),
     ("v16_exact_format_following", "data/main_agent_v16_exact_format_following_seed_20260505.jsonl", 24, 6),
+    ("v17_failure_label_repair", "data/main_agent_v17_failure_label_repair_seed_20260505.jsonl", 24, 6),
 )
 CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v6_clean_capability_eval", "data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl", 24, 4),

@@ -688,6 +688,19 @@ This gate answers only "is it worth spending a fresh eval?" It does not promote
 an adapter. Promotion still needs unused eval evidence and review. A `hold`
 verdict exits non-zero so automation can stop before spending the fresh surface.
 
+The v17 failure-label repair seed is the next tracked capability-dev surface
+after the v16 hold:
+
+```powershell
+python main.py main-check --input-file data\main_agent_v17_failure_label_repair_seed_20260505.jsonl --min-total 24 --min-category 6 --json
+python main.py main-sft-export --input-file data\main_agent_v17_failure_label_repair_seed_20260505.jsonl --output-file runs\main-agent-v17-failure-label-repair-sft-20260505.jsonl --json
+python main.py main-training-data-report --input-file runs\main-agent-v17-failure-label-repair-sft-20260505.jsonl --require-system --require-generated-metadata --json
+```
+
+It targets normal candidate-quality failures only: compact JSON, required-term
+planning, one-line no-list answers, and short key/value answers. It is
+train-seed evidence, not a clean capability claim.
+
 ## Cold Eyes Distillation
 
 Validate the synthetic Cold Eyes corpus:
