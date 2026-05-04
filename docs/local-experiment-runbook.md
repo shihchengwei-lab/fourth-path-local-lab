@@ -270,6 +270,11 @@ containment_issue_counts {}
 Say "external containment held" rather than "v10 is safe"; the adapter still
 produces dirty candidates that the external layer must catch.
 
+QLoRA training now defaults to the same no-thinking chat-template mode used by
+adapter eval. The trainer exposes `--enable-thinking` only as an explicit opt-in
+and writes `enable_thinking` into the manifest. Future adapters intended for the
+current no-thinking eval path should leave `--enable-thinking` unset.
+
 ## Benchmark Commands
 
 Warm a profile before comparing steady-state speed:

@@ -46,21 +46,24 @@ def encode_row(
     tokenizer: Any,
     row: dict[str, Any],
     max_length: int,
+    enable_thinking: bool,
 ) -> dict[str, torch.Tensor]:
     messages = row["messages"]
     if len(messages) < 2 or messages[-1].get("role") != "assistant":
         raise ValueError(f"{row.get('id', '<unknown>')}: last message must be assistant")
 
     prompt_messages = messages[:-1]
-    prompt_text = tokenizer.apply_chat_template(
+    prompt_text = chat_template_text(
+        tokenizer,
         prompt_messages,
-        tokenize=False,
         add_generation_prompt=True,
+        enable_thinking=enable_thinking,
     )
-    full_text = tokenizer.apply_chat_template(
+    full_text = chat_template_text(
+        tokenizer,
         messages,
-        tokenize=False,
         add_generation_prompt=False,
+        enable_thinking=enable_thinking,
     )
     prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
     full_ids = tokenizer(full_text, add_special_tokens=False)["input_ids"]
@@ -81,9 +84,36 @@ def encode_row(
     }
 
 
+def chat_template_text(
+    tokenizer: Any,
+    messages: list[dict[str, str]],
+    add_generation_prompt: bool,
+    enable_thinking: bool,
+) -> str:
+    try:
+        return tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=add_generation_prompt,
+            enable_thinking=enable_thinking,
+        )
+    except TypeError:
+        return tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=add_generation_prompt,
+        )
+
+
 class ChatSftDataset(Dataset[dict[str, torch.Tensor]]):
-    def __init__(self, tokenizer: Any, rows: list[dict[str, Any]], max_length: int) -> None:
-        self.examples = [encode_row(tokenizer, row, max_length) for row in rows]
+    def __init__(
+        self,
+        tokenizer: Any,
+        rows: list[dict[str, Any]],
+        max_length: int,
+        enable_thinking: bool,
+    ) -> None:
+        self.examples = [encode_row(tokenizer, row, max_length, enable_thinking) for row in rows]
 
     def __len__(self) -> int:
         return len(self.examples)
@@ -149,6 +179,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lora-dropout", type=float, default=0.05)
     parser.add_argument("--resume-adapter", default=None)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--enable-thinking", action="store_true")
     parser.add_argument("--no-4bit", action="store_true")
     parser.add_argument("--trust-remote-code", action="store_true")
     parser.add_argument("--manifest", default=None)
@@ -173,7 +204,7 @@ def main() -> int:
     if tokenizer.pad_token_id is None:
         raise ValueError("tokenizer must have a pad or eos token")
 
-    dataset = ChatSftDataset(tokenizer, rows, args.max_length)
+    dataset = ChatSftDataset(tokenizer, rows, args.max_length, args.enable_thinking)
     dataloader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -279,6 +310,7 @@ def main() -> int:
         "lora_alpha": args.lora_alpha,
         "lora_dropout": args.lora_dropout,
         "resume_adapter": args.resume_adapter,
+        "enable_thinking": args.enable_thinking,
         "use_4bit": not args.no_4bit,
         "compute_dtype": str(compute_dtype),
         "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",

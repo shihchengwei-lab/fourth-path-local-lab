@@ -4276,6 +4276,16 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(audit["containment_relevant_issues"], [])
         self.assertNotIn("dirty_candidate_forwarded", containment_issues)
 
+    def test_qlora_training_template_exposes_no_thinking_contract(self):
+        source = (main.PROJECT_ROOT / "tools" / "experimental" / "qlora_smoke_train.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("enable_thinking: bool", source)
+        self.assertIn('parser.add_argument("--enable-thinking", action="store_true")', source)
+        self.assertIn("enable_thinking=enable_thinking", source)
+        self.assertIn('"enable_thinking": args.enable_thinking', source)
+
     def test_adapter_containment_does_not_mark_blocked_dirty_candidate_as_forwarded(self):
         from tools.experimental import adapter_safety_eval
 
