@@ -391,6 +391,25 @@ promote v17 from v18. If the v18 failure labels drive the next repair, v18 is
 spent diagnostic evidence and the next clean claim surface must be a fresh
 unused v19 surface.
 
+## 2026-05-05 v19 v18-Failure Repair Seed
+
+The v19 repair seed targets v18 failure labels without copying v18 prompts as
+training rows:
+
+- seed: `data/main_agent_v19_v18_failure_repair_seed_20260505.jsonl`
+- records: 30
+- categories: short numbered plans, defensive required terms, exact short
+  format, math required phrases, and one-line length budget
+- verifier records: 30/30
+- target verifier failures: none
+- boundary overlap: none
+- prompt overlap with prior `main_agent_*.jsonl`: none
+- provenance: `split=train_seed`,
+  `evidence_level=train_seed_not_capability_evidence`,
+  `clean_claim_eligible=false`
+
+This seed is train/dev material only. It is not clean capability evidence.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs

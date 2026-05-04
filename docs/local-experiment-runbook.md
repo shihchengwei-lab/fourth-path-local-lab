@@ -785,6 +785,26 @@ Do not promote v17 from v18. If the v18 failures are used for repair, this
 surface becomes diagnostic evidence; the next clean claim needs a fresh unused
 v19 surface.
 
+## v19 v18-Failure Repair Seed
+
+Tracked capability-dev repair seed:
+
+```text
+data/main_agent_v19_v18_failure_repair_seed_20260505.jsonl
+30 rows, 5 categories x 6
+verifier_records 30/30
+target verifier failures {}
+boundary failures {}
+prompt overlaps []
+source codex_v18_failure_label_analysis
+split train_seed
+evidence_level train_seed_not_capability_evidence
+clean_claim_eligible false
+```
+
+It targets v18 failure labels without copying v18 prompts as training rows. It
+is train/dev material only, not clean capability evidence.
+
 ## Cold Eyes Distillation
 
 Validate the synthetic Cold Eyes corpus:
