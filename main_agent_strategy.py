@@ -268,6 +268,12 @@ def main_prompt_distillation_hints(user_prompt: str) -> list[str]:
         "do not use a list" in lower or "state one next action" in lower
     ):
         hints.append("Return one sentence on one line, not numbered steps or bullet lines.")
+    if "state" in lower and "next action" in lower and "include" in lower:
+        hints.append("For state-the-next-action prompts, return one sentence on one line, not numbered steps or bullets.")
+        hints.append("Copy each required included phrase exactly; do not replace it with a synonym.")
+    if "three-step plan" in lower and "include" in lower and "compare" in lower:
+        hints.append("For three-step plans with required terms, copy each included phrase exactly.")
+        hints.append("Keep each numbered step short enough to fit the character limit.")
     if re.search(r"\bexactly\s+three\b", lower) and "bullet" in lower:
         hints.append("Use exactly three '- ' lines and keep each line under eight words.")
         hints.append("Keep the total answer under 220 characters.")

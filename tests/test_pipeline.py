@@ -1234,6 +1234,16 @@ class PipelineTests(unittest.TestCase):
             "Answer.",
             "Return the four words alpha beta gamma note separated only by slashes.",
         )
+        state_next_action = main.augment_main_user_prompt(
+            "Answer.",
+            "State the next action after a model scores 13 out of 24 on an old comparison set. "
+            "Include failure labels, new training rows, and fresh comparison set.",
+        )
+        required_plan = main.augment_main_user_prompt(
+            "Plan.",
+            "Give a three-step plan to reduce false alarms in a quality checker. "
+            "Include benign examples, Compare, and clean work.",
+        )
         one_line_plan = main.augment_main_user_prompt(
             "Answer.",
             "State one next action in one sentence. Include failure labels, new training rows, "
@@ -1316,6 +1326,10 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("do not combine key names or rename them", compact_json)
         self.assertIn("copy each word exactly and join with /", slash_words)
         self.assertIn("do not pluralize or add letters", slash_words)
+        self.assertIn("state-the-next-action prompts", state_next_action)
+        self.assertIn("Copy each required included phrase exactly", state_next_action)
+        self.assertIn("copy each included phrase exactly", required_plan)
+        self.assertIn("fit the character limit", required_plan)
         self.assertIn("one sentence on one line", one_line_plan)
         self.assertIn("not numbered steps or bullet lines", one_line_plan)
         self.assertEqual(
