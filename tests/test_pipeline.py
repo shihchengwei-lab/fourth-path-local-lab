@@ -5793,6 +5793,88 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(allowed["errors"], [])
         self.assertEqual(allowed["duplicate_ids"], ["dup-1"])
 
+    def test_adapter_eval_compare_summarizes_case_deltas_without_text(self):
+        from tools.experimental.adapter_eval_compare import (
+            compare_adapter_eval_data,
+            render_adapter_eval_comparison,
+        )
+
+        baseline = {
+            "adapter": "runs/base",
+            "input_file": "data/eval.jsonl",
+            "enable_thinking": False,
+            "results": [
+                {
+                    "id": "fixed",
+                    "category": "format",
+                    "clean": False,
+                    "issues": ["missing_required_term"],
+                    "answer": "secret fixed answer",
+                },
+                {
+                    "id": "regressed",
+                    "category": "planning",
+                    "clean": True,
+                    "issues": [],
+                    "raw_answer": "secret baseline answer",
+                },
+                {
+                    "id": "persistent",
+                    "category": "planning",
+                    "clean": False,
+                    "issues": ["forbidden_pattern_present"],
+                    "prompt": "secret prompt text",
+                },
+                {"id": "clean", "category": "math", "clean": True, "issues": []},
+            ],
+        }
+        candidate = {
+            "adapter": "runs/candidate",
+            "input_file": "data/eval.jsonl",
+            "enable_thinking": False,
+            "augment_prompts": True,
+            "results": [
+                {"id": "fixed", "category": "format", "clean": True, "issues": []},
+                {
+                    "id": "regressed",
+                    "category": "planning",
+                    "clean": False,
+                    "issues": ["missing_required_term"],
+                    "target_response": "secret target text",
+                },
+                {
+                    "id": "persistent",
+                    "category": "planning",
+                    "clean": False,
+                    "issues": ["forbidden_pattern_present", "missing_required_term"],
+                },
+                {"id": "clean", "category": "math", "clean": True, "issues": []},
+            ],
+        }
+
+        data = compare_adapter_eval_data(
+            baseline,
+            candidate,
+            baseline_name="v13",
+            candidate_name="v16",
+        )
+        encoded = json.dumps(data, ensure_ascii=False)
+        rendered = render_adapter_eval_comparison(data)
+
+        self.assertEqual(data["clean_delta"], 0)
+        self.assertEqual(data["fixed_cases"][0]["id"], "fixed")
+        self.assertEqual(data["regressed_cases"][0]["id"], "regressed")
+        self.assertEqual(data["persistent_failures"][0]["id"], "persistent")
+        self.assertEqual(data["issue_delta"]["missing_required_term"], 1)
+        self.assertEqual(data["category_delta"]["planning"]["clean_delta"], -1)
+        self.assertTrue(data["input_file_match"])
+        self.assertTrue(data["candidate_augment_prompts"])
+        self.assertIn("Clean: 2/4 -> 2/4 (delta +0)", rendered)
+        self.assertNotIn("secret fixed answer", encoded)
+        self.assertNotIn("secret baseline answer", encoded)
+        self.assertNotIn("secret prompt text", encoded)
+        self.assertNotIn("secret target text", encoded)
+
     def test_main_training_data_report_requires_generated_metadata(self):
         lines = [
             {

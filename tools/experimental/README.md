@@ -15,6 +15,8 @@ they do not change the audited pipeline by themselves.
   before final output.
 - `adapter_safety_eval.py`: backward-compatible entrypoint for the same
   containment evaluator.
+- `adapter_eval_compare.py`: compare two adapter eval JSON summaries by case id
+  without copying prompts or generated answers into the report.
 - `merge_sft_jsonl.py`: validated SFT JSONL merger for experiment datasets.
 
 Use these only for documented experiment lanes such as

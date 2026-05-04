@@ -548,6 +548,20 @@ so do not promote v16 and do not spend a fresh v12 clean eval. Runtime prompt
 hints were added for compact JSON, slash-separated exact words, and one-line
 no-list prompts, but the augmented v11 adapter eval still stayed at 22/25.
 
+Adapter comparison artifacts:
+
+```text
+runs/adapter-eval-compare-v13-v15-v11-20260505.json
+runs/adapter-eval-compare-v15-v16-v11-20260505.json
+runs/adapter-eval-compare-v13-v16-v11-20260505.json
+```
+
+The comparison tool reports case ids, categories, and verifier issue labels
+only; it intentionally omits prompts, target answers, and generated answers.
+The v13 -> v16 comparison shows one fixed case (`v11-clean-planning-004`), two
+regressions (`v11-clean-planning-003`, `v11-clean-planning-005`), and one
+persistent format failure (`v11-clean-format-002`).
+
 Code maintenance note:
 
 ```text
@@ -555,6 +569,7 @@ main-training-data-report core assembly moved out of main.py.
 training_data.py owns report data assembly.
 training_data_cli.py owns the CLI print/exit wrapper.
 compute_gates_cli.py owns compute-gate CLI print/exit wrappers.
+adapter_eval_compare.py owns adapter eval case-delta comparison.
 ```
 
 This is a small periodic refactor checkpoint to keep `main.py` from absorbing
