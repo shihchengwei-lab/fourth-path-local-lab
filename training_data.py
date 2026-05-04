@@ -1010,6 +1010,12 @@ def render_training_data_quality_report(data: dict[str, Any]) -> str:
         lines.extend(f"- {label}: {count}" for label, count in data["verifier_label_counts"].items())
     if data["duplicate_ids"] or data["duplicate_record_ids"]:
         lines.append("Duplicate keys detected.")
+    if data.get("authority_boundary_issue_counts"):
+        lines.append("Authority/refusal/control-plane boundary issues:")
+        lines.extend(
+            f"- {issue}: {count}"
+            for issue, count in data["authority_boundary_issue_counts"].items()
+        )
     if data.get("format_errors"):
         lines.append("Format errors:")
         lines.extend(f"- {error}" for error in data["format_errors"])

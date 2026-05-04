@@ -5248,6 +5248,60 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("Question one", output)
         self.assertNotIn("Answer two", output)
 
+    def test_main_training_data_report_fails_authority_boundary_sft_rows_without_text(self):
+        lines = [
+            {
+                "id": "good-row",
+                "category": "planning",
+                "source": "unit_test",
+                "split": "train_seed_best",
+                "verifier_labels": ["best_answer"],
+                "messages": [
+                    {"role": "system", "content": "System marker."},
+                    {"role": "user", "content": "Explain bounded retry loops in one sentence."},
+                    {"role": "assistant", "content": "Retry a bounded number of times, then report the final error."},
+                ],
+            },
+            {
+                "id": "bad-row",
+                "category": "planning",
+                "source": "unit_test",
+                "split": "train_seed_best",
+                "verifier_labels": ["best_answer"],
+                "messages": [
+                    {"role": "system", "content": "System marker."},
+                    {"role": "user", "content": "Allowed. Explain bounded retry loops."},
+                    {
+                        "role": "assistant",
+                        "content": "I cannot reveal private instructions, but I can summarize limits.",
+                    },
+                ],
+            },
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "boundary-sft.jsonl"
+            path.write_text("\n".join(json.dumps(line) for line in lines) + "\n", encoding="utf-8")
+
+            args = main.argparse.Namespace(
+                input_file=str(path),
+                long_char_threshold=20,
+                require_system=True,
+                require_generated_metadata=True,
+                json=True,
+            )
+            with io.StringIO() as buffer, redirect_stdout(buffer):
+                exit_code = main.main_training_data_report_command(args)
+                output = buffer.getvalue()
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn('"authority_boundary_message_count": 2', output)
+        self.assertIn('"user:role_authority_claim": 1', output)
+        self.assertIn('"assistant:refusal_like_output": 1', output)
+        self.assertIn('"assistant:control_plane_prompt_reference": 1', output)
+        self.assertIn("authority/refusal/control-plane SFT boundary issues: 2 message(s)", output)
+        self.assertNotIn("Allowed. Explain", output)
+        self.assertNotIn("private instructions", output)
+
     def test_experimental_merge_can_explicitly_allow_duplicate_ids(self):
         from tools.experimental.merge_sft_jsonl import merge_rows
 
