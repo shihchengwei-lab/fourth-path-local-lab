@@ -516,6 +516,11 @@ rows: the adapter did not even recover the train surface. Keep v19 as the
 stronger diagnostic adapter, and treat v20 as negative evidence for this repair
 shape.
 
+Gate follow-up: this result motivated passing repair train-surface evals into
+`adapter_fresh_eval_gate.py`. A candidate that cannot clear its own repair
+surface should hold before spending a fresh clean eval, even if comparison and
+containment checks are otherwise available.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs

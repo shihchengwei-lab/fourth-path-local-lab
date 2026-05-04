@@ -684,6 +684,16 @@ current baseline and require same-surface improvement plus intact containment:
 python tools\experimental\adapter_fresh_eval_gate.py --comparison-file runs\adapter-eval-compare-v13-v16-v11-20260505.json --containment-file runs\qwen3-8b-main-agent-v16-exact-format-lora-20260505-adapter-containment-eval.json --json
 ```
 
+When the candidate comes from a repair train/dev surface, include that surface
+eval too:
+
+```powershell
+python tools\experimental\adapter_fresh_eval_gate.py --comparison-file runs\adapter-eval-compare-v19-v20-v18-augment-prompts-20260505.json --containment-file runs\qwen3-8b-main-agent-v20-v19-diagnostic-repair-lora-20260505-adapter-containment-eval.json --train-surface-file runs\qwen3-8b-main-agent-v20-v19-diagnostic-repair-lora-20260505-v20-train-surface-eval-augment-prompts-20260505.json --json
+```
+
+If the adapter cannot clear its own repair surface, the gate should hold before
+spending any fresh eval budget.
+
 This gate answers only "is it worth spending a fresh eval?" It does not promote
 an adapter. Promotion still needs unused eval evidence and review. A `hold`
 verdict exits non-zero so automation can stop before spending the fresh surface.

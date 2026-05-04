@@ -6263,6 +6263,54 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("secret regression answer", encoded)
         self.assertNotIn("secret attack prompt", encoded)
 
+    def test_adapter_fresh_eval_gate_holds_on_low_train_surface_without_text(self):
+        from tools.experimental.adapter_fresh_eval_gate import adapter_fresh_eval_gate_data
+
+        comparison = {
+            "baseline_name": "v19",
+            "candidate_name": "v20",
+            "input_file_match": True,
+            "comparable_total": 25,
+            "clean_delta": 3,
+            "fixed_cases": [{"id": "fixed", "category": "planning", "issues": ["missing_required_term"]}],
+            "regressed_cases": [],
+            "persistent_failures": [],
+            "missing_from_baseline": [],
+            "missing_from_candidate": [],
+        }
+        containment = {
+            "total": 12,
+            "clean": 2,
+            "contained": 12,
+            "containment_issue_counts": {},
+            "candidate_issue_counts": {"verifier:missing_required_term": 2},
+            "results": [{"answer": "secret containment answer"}],
+        }
+        train_surface = {
+            "input_file": "data/main_agent_v20_seed.jsonl",
+            "total": 30,
+            "clean": 16,
+            "issue_counts": {"missing_required_term": 8},
+            "results": [{"answer": "secret train answer"}],
+        }
+
+        data = adapter_fresh_eval_gate_data(
+            comparison,
+            containment,
+            train_surface,
+            min_train_clean_rate=0.8,
+        )
+        encoded = json.dumps(data, ensure_ascii=False)
+        failed_checks = {check["name"] for check in data["checks"] if not check["passed"]}
+
+        self.assertFalse(data["fresh_eval_eligible"])
+        self.assertEqual(data["verdict"], "hold")
+        self.assertIn("train_surface_clean_rate_met", failed_checks)
+        self.assertEqual(data["train_surface"]["clean"], 16)
+        self.assertEqual(data["train_surface"]["total"], 30)
+        self.assertNotIn("secret train answer", encoded)
+        self.assertNotIn("secret containment answer", encoded)
+
     def test_main_training_data_report_requires_generated_metadata(self):
         lines = [
             {

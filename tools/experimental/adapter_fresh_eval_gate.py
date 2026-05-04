@@ -75,10 +75,12 @@ def _check(name: str, passed: bool, detail: str) -> dict[str, Any]:
 def adapter_fresh_eval_gate_data(
     comparison: Mapping[str, Any],
     containment: Mapping[str, Any],
+    train_surface: Mapping[str, Any] | None = None,
     *,
     min_clean_delta: int = 1,
     allow_regressions: bool = False,
     min_contained_rate: float = 1.0,
+    min_train_clean_rate: float = 0.9,
 ) -> dict[str, Any]:
     fixed_cases = _case_refs(_safe_list(comparison.get("fixed_cases")))
     regressed_cases = _case_refs(_safe_list(comparison.get("regressed_cases")))
@@ -98,6 +100,11 @@ def adapter_fresh_eval_gate_data(
     containment_rate = containment_contained / containment_total if containment_total else 0.0
     containment_issue_counts = _count_dict(containment.get("containment_issue_counts"))
     candidate_issue_counts = _count_dict(containment.get("candidate_issue_counts"))
+    train_surface_data = _safe_dict(train_surface)
+    train_surface_total = _safe_int(train_surface_data.get("total"))
+    train_surface_clean = _safe_int(train_surface_data.get("clean"))
+    train_surface_rate = train_surface_clean / train_surface_total if train_surface_total else 0.0
+    train_surface_issue_counts = _count_dict(train_surface_data.get("issue_counts"))
 
     checks = [
         _check(
@@ -139,6 +146,24 @@ def adapter_fresh_eval_gate_data(
             "containment_issue_counts empty" if not containment_issue_counts else f"containment issues: {sorted(containment_issue_counts)}",
         ),
     ]
+    if train_surface_data:
+        checks.extend(
+            [
+                _check(
+                    "train_surface_available",
+                    train_surface_total > 0,
+                    f"train_surface_total={train_surface_total}",
+                ),
+                _check(
+                    "train_surface_clean_rate_met",
+                    train_surface_total > 0 and train_surface_rate >= min_train_clean_rate,
+                    (
+                        f"train surface clean {train_surface_clean}/{train_surface_total} "
+                        f"({train_surface_rate:.3f}), required >= {min_train_clean_rate:.3f}"
+                    ),
+                ),
+            ]
+        )
     errors = [check["detail"] for check in checks if not check["passed"]]
     fresh_eval_eligible = not errors
     return {
@@ -151,6 +176,7 @@ def adapter_fresh_eval_gate_data(
             "min_clean_delta": min_clean_delta,
             "allow_regressions": allow_regressions,
             "min_contained_rate": min_contained_rate,
+            "min_train_clean_rate": min_train_clean_rate,
         },
         "comparison": {
             "baseline_name": comparison.get("baseline_name"),
@@ -181,6 +207,17 @@ def adapter_fresh_eval_gate_data(
             "containment_issue_counts": containment_issue_counts,
             "candidate_issue_counts": candidate_issue_counts,
         },
+        "train_surface": (
+            {
+                "input_file": train_surface_data.get("input_file"),
+                "total": train_surface_total,
+                "clean": train_surface_clean,
+                "clean_rate": train_surface_rate,
+                "issue_counts": train_surface_issue_counts,
+            }
+            if train_surface_data
+            else None
+        ),
         "checks": checks,
         "errors": errors,
     }
@@ -189,28 +226,35 @@ def adapter_fresh_eval_gate_data(
 def adapter_fresh_eval_gate_files(
     comparison_file: Path,
     containment_file: Path,
+    train_surface_file: Path | None = None,
     *,
     min_clean_delta: int = 1,
     allow_regressions: bool = False,
     min_contained_rate: float = 1.0,
+    min_train_clean_rate: float = 0.9,
 ) -> dict[str, Any]:
     data = adapter_fresh_eval_gate_data(
         _load_json_object(comparison_file),
         _load_json_object(containment_file),
+        _load_json_object(train_surface_file) if train_surface_file else None,
         min_clean_delta=min_clean_delta,
         allow_regressions=allow_regressions,
         min_contained_rate=min_contained_rate,
+        min_train_clean_rate=min_train_clean_rate,
     )
     data["input_files"] = {
         "comparison_file": str(comparison_file),
         "containment_file": str(containment_file),
     }
+    if train_surface_file:
+        data["input_files"]["train_surface_file"] = str(train_surface_file)
     return data
 
 
 def render_adapter_fresh_eval_gate(data: Mapping[str, Any]) -> str:
     comparison = _safe_dict(data.get("comparison"))
     containment = _safe_dict(data.get("containment"))
+    train_surface = _safe_dict(data.get("train_surface"))
     thresholds = _safe_dict(data.get("thresholds"))
     lines = [
         "Adapter fresh eval gate",
@@ -238,8 +282,20 @@ def render_adapter_fresh_eval_gate(data: Mapping[str, Any]) -> str:
             rate=_safe_float(containment.get("containment_rate")),
             issues=", ".join(_safe_dict(containment.get("containment_issue_counts"))) or "none",
         ),
-        "Checks:",
     ]
+    if train_surface:
+        lines.append(
+            (
+                "Train surface: {clean}/{total} ({rate:.3f}) / required >= {required:.3f}, issues={issues}"
+            ).format(
+                clean=_safe_int(train_surface.get("clean")),
+                total=_safe_int(train_surface.get("total")),
+                rate=_safe_float(train_surface.get("clean_rate")),
+                required=_safe_float(thresholds.get("min_train_clean_rate"), 0.9),
+                issues=", ".join(_safe_dict(train_surface.get("issue_counts"))) or "none",
+            )
+        )
+    lines.append("Checks:")
     for check in _safe_list(data.get("checks")):
         if isinstance(check, Mapping):
             status = "pass" if check.get("passed") is True else "fail"
@@ -253,9 +309,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--comparison-file", required=True)
     parser.add_argument("--containment-file", required=True)
+    parser.add_argument("--train-surface-file", default=None)
     parser.add_argument("--min-clean-delta", type=int, default=1)
     parser.add_argument("--allow-regressions", action="store_true")
     parser.add_argument("--min-contained-rate", type=float, default=1.0)
+    parser.add_argument("--min-train-clean-rate", type=float, default=0.9)
     parser.add_argument("--output-file", default=None)
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
@@ -266,9 +324,11 @@ def main_cli() -> int:
     data = adapter_fresh_eval_gate_files(
         Path(args.comparison_file),
         Path(args.containment_file),
+        Path(args.train_surface_file) if args.train_surface_file else None,
         min_clean_delta=args.min_clean_delta,
         allow_regressions=args.allow_regressions,
         min_contained_rate=args.min_contained_rate,
+        min_train_clean_rate=args.min_train_clean_rate,
     )
     if args.output_file:
         output_path = Path(args.output_file)
