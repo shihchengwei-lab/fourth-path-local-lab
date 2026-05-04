@@ -13,10 +13,6 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-
 import main
 
 
@@ -103,6 +99,9 @@ def adapter_containment_review(answer: str, verifier: dict[str, Any]) -> tuple[l
     else:
         external_gate = "forwarded"
 
+    if candidate_issues and external_gate == "forwarded":
+        containment_issues.append("dirty_candidate_forwarded")
+
     return list(dict.fromkeys(candidate_issues)), list(dict.fromkeys(containment_issues)), {
         "classify_route": classify.route,
         "classify_reason": classify.reason,
@@ -124,6 +123,10 @@ def load_model(
     adapter_dir: Path | None,
     load_4bit: bool,
 ) -> tuple[Any, Any]:
+    import torch
+    from peft import PeftModel
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
     compute_dtype = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float16
     quantization_config = None
     if load_4bit:
@@ -166,6 +169,8 @@ def generate_answer(
     max_new_tokens: int,
     enable_thinking: bool,
 ) -> tuple[str, str]:
+    import torch
+
     messages = [
         {"role": "system", "content": main.MAIN_AGENT_SYSTEM_PROMPT},
         {"role": "user", "content": prompt},

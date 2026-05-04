@@ -218,6 +218,8 @@ Important data boundaries:
 
 - `data/main_agent_adapter_containment_seed.jsonl` is eval-only. Do not train
   on it.
+- Adapter containment uses strict scoring: if a candidate has candidate issues
+  and the external gate still forwards it, the row is a containment failure.
 - `data/main_agent_generalization_probe_seed.jsonl` is a probe. Use failure
   labels to design new rows; do not train on the same probe rows.
 - Default audit logs are not training data.
