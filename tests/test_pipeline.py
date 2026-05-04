@@ -3458,6 +3458,9 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["capability_eval_corpora"]["v8_clean_capability_eval"]["errors"], [])
         self.assertEqual(data["capability_eval_corpora"]["v9_clean_capability_eval"]["total"], 24)
         self.assertEqual(data["capability_eval_corpora"]["v9_clean_capability_eval"]["errors"], [])
+        self.assertEqual(data["capability_eval_corpora"]["v10_clean_capability_eval"]["total"], 25)
+        self.assertEqual(data["capability_eval_corpora"]["v10_clean_capability_eval"]["errors"], [])
+        self.assertEqual(data["boundary_clean_capability_eval"]["errors"], [])
         for version in range(6, 18):
             self.assertNotIn(f"v{version}_clean_heldout", data["main_corpora"])
         self.assertEqual(data["data_quality"]["verifier_type_count"], 8)
@@ -3471,7 +3474,7 @@ class PipelineTests(unittest.TestCase):
         )
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][0], "v6")
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][-1], "v17")
-        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v10")
+        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v11")
         self.assertEqual(data["capability_claim_quality"]["total_records"], 102)
         self.assertEqual(data["capability_claim_quality"]["total_verifier_records"], 62)
         self.assertEqual(data["capability_claim_quality"]["verifier_type_count"], 8)
@@ -4124,6 +4127,61 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(v9_clean.categories["v9_clean_safe_near_boundary"], 5)
         self.assertEqual(verifier_failures, {})
         self.assertFalse(any(record.prompt in known_prompts for record in v9_records))
+
+    def test_main_agent_v10_clean_capability_eval_seed_is_valid_separate_and_boundary_clean(self):
+        from training_boundaries import capability_dev_authority_overlap_issues
+
+        path = main.PROJECT_ROOT / "data" / "main_agent_v10_clean_capability_eval_seed_20260505.jsonl"
+        v10_clean = main.check_main_agent_corpus(path)
+        source_paths = [
+            main.PROJECT_ROOT / "data" / "main_agent_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_hard_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_rotated_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_fresh_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_latent_probe_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_generalization_probe_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_generalization_driven_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v5_clean_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v6_clean_capability_eval_seed_20260504.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v6_capability_repair_seed_20260504.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v8_clean_capability_eval_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v9_capability_repair_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v9_clean_capability_eval_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v10_capability_repair_seed_20260505.jsonl",
+        ]
+        known_records = []
+        for source_path in source_paths:
+            records, _, _ = main.load_main_agent_records(source_path)
+            known_records.extend(records)
+        known_prompts = {record.prompt for record in known_records}
+        v10_records, _, _ = main.load_main_agent_records(path)
+        verifier_failures = {
+            record.record_id: main.main_verifier_issues(record.target_response, record.verifier)
+            for record in v10_records
+            if main.main_verifier_issues(record.target_response, record.verifier)
+        }
+        boundary_failures = {
+            record.record_id: capability_dev_authority_overlap_issues(
+                {"prompt": record.prompt, "target_response": record.target_response}
+            )
+            for record in v10_records
+            if capability_dev_authority_overlap_issues(
+                {"prompt": record.prompt, "target_response": record.target_response}
+            )
+        }
+
+        self.assertEqual(v10_clean.errors, [])
+        self.assertEqual(v10_clean.total, 25)
+        self.assertEqual(v10_clean.verifier_records, 25)
+        self.assertEqual(v10_clean.categories["v10_clean_math"], 5)
+        self.assertEqual(v10_clean.categories["v10_clean_code_repair"], 5)
+        self.assertEqual(v10_clean.categories["v10_clean_format_constraints"], 5)
+        self.assertEqual(v10_clean.categories["v10_clean_planning"], 5)
+        self.assertEqual(v10_clean.categories["v10_clean_safe_near_boundary"], 5)
+        self.assertEqual(verifier_failures, {})
+        self.assertEqual(boundary_failures, {})
+        self.assertFalse(any(record.prompt in known_prompts for record in v10_records))
 
     def test_main_agent_v10_capability_repair_seed_is_valid_and_separate(self):
         path = main.PROJECT_ROOT / "data" / "main_agent_v10_capability_repair_seed_20260505.jsonl"

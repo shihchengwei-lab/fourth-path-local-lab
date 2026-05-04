@@ -49,12 +49,16 @@ CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v6_clean_capability_eval", "data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl", 24, 4),
     ("v8_clean_capability_eval", "data/main_agent_v8_clean_capability_eval_seed_20260505.jsonl", 24, 4),
     ("v9_clean_capability_eval", "data/main_agent_v9_clean_capability_eval_seed_20260505.jsonl", 24, 4),
+    ("v10_clean_capability_eval", "data/main_agent_v10_clean_capability_eval_seed_20260505.jsonl", 25, 5),
+)
+BOUNDARY_CLEAN_CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str], ...] = (
+    ("v10_clean_capability_eval", "data/main_agent_v10_clean_capability_eval_seed_20260505.jsonl"),
 )
 CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))
-NEXT_CAPABILITY_CLAIM_VERSION = "v10"
+NEXT_CAPABILITY_CLAIM_VERSION = "v11"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
-    "mint a fresh unused v10 capability eval surface after the next repair"
+    "mint a fresh unused v11 capability eval surface after the next repair"
 )
 
 
@@ -394,6 +398,41 @@ def capability_eval_corpus_checks(project_root: Path) -> dict[str, Any]:
     }
 
 
+def boundary_clean_capability_eval_checks(project_root: Path) -> dict[str, Any]:
+    files: list[dict[str, Any]] = []
+    errors: list[str] = []
+
+    for key, relative_path in BOUNDARY_CLEAN_CAPABILITY_EVAL_CORPUS_SPECS:
+        path = project_root / relative_path
+        file_errors: list[str] = []
+        file_total = 0
+        if not path.exists():
+            file_errors.append(f"file not found: {path}")
+        else:
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if not line.strip():
+                    continue
+                file_total += 1
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    file_errors.append(f"line {line_number}: invalid JSON: {exc.msg}")
+                    continue
+                if not isinstance(row, dict):
+                    file_errors.append(f"line {line_number}: row must be an object")
+                    continue
+                authority_overlap = capability_dev_authority_overlap_issues(row)
+                if authority_overlap:
+                    file_errors.append(
+                        f"line {line_number}: capability eval row overlaps external authority: "
+                        + ", ".join(authority_overlap)
+                    )
+        files.append({"key": key, "path": str(path), "total": file_total, "errors": file_errors})
+        errors.extend(f"{key}: {error}" for error in file_errors)
+
+    return {"files": files, "errors": errors}
+
+
 def capability_dev_provenance_checks(project_root: Path) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -510,6 +549,7 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
     main_corpus_checks = main_release_corpus_checks(config.project_root)
     capability_dev_checks = capability_dev_corpus_checks(config.project_root)
     capability_eval_checks = capability_eval_corpus_checks(config.project_root)
+    boundary_clean_eval = boundary_clean_capability_eval_checks(config.project_root)
     capability_dev_provenance = capability_dev_provenance_checks(config.project_root)
     clean_heldout_checks, clean_heldout_paths = legacy_clean_heldout_checks(config.project_root)
     data_quality = config.main_data_quality_check_data(list(config.main_data_quality_files))
@@ -536,6 +576,7 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
         errors.extend(prefixed_errors(f"capability_dev_{key}", check.errors))
     for key, check in capability_eval_checks.items():
         errors.extend(prefixed_errors(f"capability_eval_{key}", check.errors))
+    errors.extend(prefixed_errors("boundary_clean_capability_eval", boundary_clean_eval["errors"]))
     errors.extend(prefixed_errors("capability_dev_provenance", capability_dev_provenance["errors"]))
     errors.extend(prefixed_errors("data_quality", data_quality["errors"]))
     errors.extend(prefixed_errors("capability_claim_quality", data_quality["errors"]))
@@ -562,6 +603,7 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
         "capability_eval_corpora": {
             key: check.public_dict() for key, check in capability_eval_checks.items()
         },
+        "boundary_clean_capability_eval": boundary_clean_eval,
         "capability_dev_provenance": capability_dev_provenance,
         "data_quality": main_data_quality_summary(data_quality),
         "capability_claim_quality": capability_claim_quality_summary(

@@ -176,8 +176,26 @@ The same gate also checks repair-seed provenance: each row must keep
 `v5` as non-evidence context, records old `v6-v17` as withdrawn, and now treats
 the v8 eval surface as spent comparison evidence. The v9 eval surface is now
 tracked as a spent comparison surface for the v9 repair. After this comparison,
-the next clean capability claim requires a fresh unused v10 eval surface after
-the next repair.
+the next clean capability claim requires a fresh unused v11 eval surface after
+the next repair; the boundary-clean v10 surface has now been used for v9/v10/v12
+comparison.
+
+`data/main_agent_v10_clean_capability_eval_seed_20260505.jsonl` is the first
+boundary-clean capability eval surface after the authority/refusal/control-plane
+data-boundary correction. Release gate now includes a boundary-clean check for
+that file, so future claim surfaces should follow that shape rather than the
+older spent v6/v8/v9 evals that included external safety-layer terms.
+
+Fresh v10 comparison:
+
+```text
+v9:  13/25 clean
+v10: 12/25 clean
+v12: 12/25 clean
+```
+
+Result: v12 is not a promotion candidate. Planning stayed 0/5, and the new
+surface is now spent.
 
 Run v9 fresh comparison:
 
