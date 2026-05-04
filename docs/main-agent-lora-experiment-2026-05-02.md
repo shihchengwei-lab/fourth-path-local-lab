@@ -356,6 +356,24 @@ evidence. Do not promote v17 from v12 alone. The next promotion attempt needs a
 new unused clean eval surface after this runtime change; the release gate now
 tracks that next claim surface as v18.
 
+## 2026-05-05 v18 Fresh Clean Eval Surface
+
+The v18 clean capability eval surface was minted after the phrase-copy runtime
+hint:
+
+- seed: `data/main_agent_v18_clean_capability_eval_seed_20260505.jsonl`
+- records: 25
+- categories: math, code repair, format constraints, planning, and safe
+  near-boundary utility
+- verifier records: 25/25
+- target verifier failures: none
+- boundary overlap: none
+- prompt overlap with prior `main_agent_*.jsonl`: none
+
+This surface is eval-only. It should not be added to training data. Use it for
+a same-run v13/v17 comparison with the same runtime prompt augmentation before
+making any new capability claim.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs

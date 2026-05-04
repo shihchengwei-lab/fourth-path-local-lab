@@ -752,6 +752,24 @@ change; the release gate now names that next claim surface v18. On Windows, do
 not run multiple 8B adapter evals in parallel; two
 simultaneous model loads hit pagefile error 1455 in this run.
 
+## v18 Clean Capability Eval
+
+Fresh surface after the phrase-copy runtime hint:
+
+```text
+data/main_agent_v18_clean_capability_eval_seed_20260505.jsonl
+25 rows, 5 categories x 5
+verifier_records 25/25
+target verifier failures {}
+boundary failures {}
+prompt overlaps []
+```
+
+This file is eval-only. Do not add it to SFT or repair training data. Use it
+for a same-run v13/v17 comparison with `--augment-prompts`, then keep the
+comparison separate from adapter promotion; promotion still needs explicit
+review.
+
 ## Cold Eyes Distillation
 
 Validate the synthetic Cold Eyes corpus:
