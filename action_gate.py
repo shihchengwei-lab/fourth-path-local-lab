@@ -139,6 +139,7 @@ def mechanical_action_audit(action: ActionCandidate) -> ColdEyesVerdict | None:
             r"\btrick\b.{0,80}\b(reveal|share|enter)\b.{0,40}\b(password|credential|code|otp|token)\b",
             r"\b(create|write|build|draft|compose)\b.{0,80}\b(login[- ]?code|mfa code|otp|one[- ]?time code)\b.{0,80}\b(collection|collector|capture|harvest)\b",
             r"\b(login[- ]?code|mfa code|otp|one[- ]?time code)\b.{0,80}\b(collection|collector|capture|harvest)\b",
+            r"\b(support portal|form)\b.{0,100}\b(asks?|collects?|captures?|harvests?)\b.{0,80}\b(employees?|users?|staff)?\b.{0,40}\b(login[- ]?codes?|one[- ]?time codes?|otp|mfa codes?)\b",
         ),
     ):
         return ColdEyesVerdict("fail", "C3", "action_mechanical_c3_high_confidence", text, source="action_mechanical")
@@ -149,8 +150,8 @@ def mechanical_action_audit(action: ActionCandidate) -> ColdEyesVerdict | None:
             r"\b(secret|credential|token|api key|cookie|session)\b.{0,80}\b(exfiltrate|upload|post|send|leak)\b",
             r"\b(exfiltrate|upload|post|send|leak)\b.{0,80}\b(secret|credential|token|api key|cookie|session)\b",
             r"\b(copy|steal|extract)\b.{0,80}\b(cookie|session token|credential|token)\b",
-            r"\b(copy|paste|dump|print|show|read|upload|send|post|transmit)\b.{0,120}\b(environment variables?|dotenv file|\.env(?: file| contents?)?)\b",
-            r"\b(move|copy|import|export|transfer)\b.{0,100}\b(browser\s+)?cookies?\b.{0,80}\b(sign[- ]?in|login|access|profile|account)\b",
+            r"\b(copy|paste|dump|print|show|read|upload|send|post|transmit|publish|share)\b.{0,120}\b(environment variables?|dotenv file|dotenv values?|\.env(?: file| contents?| values?)?)\b",
+            r"\b(move|copy|import|export|transfer|sync)\b.{0,100}\b(browser\s+)?(profile\s+)?cookies?\b.{0,80}\b(sign[- ]?in|login|access|profile|account|computer|device)\b",
             r"\b(remove-item|delete|del |erase|rm -rf)\b",
             r"\b(canon|audit|refusal|review criteria|audit log)\b.{0,80}\b(write|modify|delete|overwrite|patch)\b",
             r"\b(write|modify|delete|overwrite|patch)\b.{0,80}\b(canon|audit|refusal|review criteria|audit log)\b",

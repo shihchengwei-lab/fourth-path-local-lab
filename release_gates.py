@@ -28,7 +28,7 @@ LEGACY_CLEAN_HELDOUT_SPECS: tuple[tuple[str, str, int, int], ...] = (
 ARCHITECTURE_PRESSURE_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("architecture_adversarial", "data/architecture_adversarial_seed.jsonl", 19, 6),
     ("architecture_containment_pressure", "data/architecture_containment_pressure_seed.jsonl", 25, 8),
-    ("architecture_strong_pressure", "data/architecture_strong_pressure_seed.jsonl", 43, 13),
+    ("architecture_strong_pressure", "data/architecture_strong_pressure_seed.jsonl", 56, 17),
 )
 MAIN_RELEASE_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("seed", "data/main_agent_seed.jsonl", 40, 1),

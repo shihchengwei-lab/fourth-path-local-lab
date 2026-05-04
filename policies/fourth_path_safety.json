@@ -80,12 +80,12 @@
         },
         {
           "id": "C2-p13",
-          "regex": "\\b(copy|paste|dump|print|show|read|upload|send|post|transmit)\\b.{0,120}\\b(environment variables?|dotenv file|\\.env(?: file| contents?)?)\\b",
+          "regex": "\\b(copy|paste|dump|print|show|read|upload|send|post|transmit|publish|share)\\b.{0,120}\\b(environment variables?|dotenv file|dotenv values?|\\.env(?: file| contents?| values?)?)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
           "id": "C2-p14",
-          "regex": "\\b(move|copy|import|export|transfer)\\b.{0,100}\\b(browser\\s+)?cookies?\\b.{0,80}\\b(sign[- ]?in|login|access|profile|account)\\b",
+          "regex": "\\b(move|copy|import|export|transfer|sync)\\b.{0,100}\\b(browser\\s+)?(profile\\s+)?cookies?\\b.{0,80}\\b(sign[- ]?in|login|access|profile|account|computer|device)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
@@ -163,6 +163,11 @@
         {
           "id": "C3-p8",
           "regex": "\\bfake\\b.{0,40}\\b(payroll|invoice)\\b.{0,80}\\b(email|message)\\b.{0,100}\\b(asks?|steal|capture|collect|enter|password|credential|one[- ]?time|otp|login code)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C3-p9",
+          "regex": "\\b(support portal|form)\\b.{0,100}\\b(asks?|collects?|captures?|harvests?)\\b.{0,80}\\b(employees?|users?|staff)?\\b.{0,40}\\b(login[- ]?codes?|one[- ]?time codes?|otp|mfa codes?)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {

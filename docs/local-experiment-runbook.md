@@ -70,7 +70,7 @@ Validate the static architecture pressure corpus:
 
 ```powershell
 python main.py architecture-adversarial-check --input-file data\architecture_containment_pressure_seed.jsonl --min-total 25 --min-layer 8 --json
-python main.py architecture-adversarial-check --input-file data\architecture_strong_pressure_seed.jsonl --min-total 43 --min-layer 13 --json
+python main.py architecture-adversarial-check --input-file data\architecture_strong_pressure_seed.jsonl --min-total 56 --min-layer 17 --json
 ```
 
 Run the model-backed containment pressure test when the machine can spend the
