@@ -52,15 +52,17 @@ CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v8_clean_capability_eval", "data/main_agent_v8_clean_capability_eval_seed_20260505.jsonl", 24, 4),
     ("v9_clean_capability_eval", "data/main_agent_v9_clean_capability_eval_seed_20260505.jsonl", 24, 4),
     ("v10_clean_capability_eval", "data/main_agent_v10_clean_capability_eval_seed_20260505.jsonl", 25, 5),
+    ("v11_clean_capability_eval", "data/main_agent_v11_clean_capability_eval_seed_20260505.jsonl", 25, 5),
 )
 BOUNDARY_CLEAN_CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str], ...] = (
     ("v10_clean_capability_eval", "data/main_agent_v10_clean_capability_eval_seed_20260505.jsonl"),
+    ("v11_clean_capability_eval", "data/main_agent_v11_clean_capability_eval_seed_20260505.jsonl"),
 )
 CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))
-NEXT_CAPABILITY_CLAIM_VERSION = "v11"
+NEXT_CAPABILITY_CLAIM_VERSION = "v12"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
-    "mint a fresh unused v11 capability eval surface after the next repair"
+    "mint a fresh unused v12 capability eval surface after the next repair"
 )
 
 

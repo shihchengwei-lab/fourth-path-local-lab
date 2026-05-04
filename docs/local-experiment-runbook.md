@@ -176,9 +176,9 @@ The same gate also checks repair-seed provenance: each row must keep
 `v5` as non-evidence context, records old `v6-v17` as withdrawn, and now treats
 the v8 eval surface as spent comparison evidence. The v9 eval surface is now
 tracked as a spent comparison surface for the v9 repair. After this comparison,
-the next clean capability claim requires a fresh unused v11 eval surface after
-the next repair; the boundary-clean v10 surface has now been used for v9/v10/v12
-comparison.
+the next clean capability claim required a fresh unused eval surface after the
+next repair; the boundary-clean v10 surface has now been used for v9/v10/v12
+comparison and later spent by v13/v14 comparison.
 
 `data/main_agent_v10_clean_capability_eval_seed_20260505.jsonl` is the first
 boundary-clean capability eval surface after the authority/refusal/control-plane
@@ -427,6 +427,31 @@ Interpretation: v14 learned its own training surface, but did not improve the
 already-spent v10 planning surface over v13. Do not promote this adapter. The
 safety result remains an external-layer result: containment held, while Main
 Agent candidate cleanliness on containment prompts dropped to 3/12.
+
+v11 fair visible-constraint comparison:
+
+```text
+surface: data/main_agent_v11_clean_capability_eval_seed_20260505.jsonl
+shape: 25 rows, 5 categories, boundary-clean
+design fix: exact verifier terms are visible in the user prompt
+```
+
+This was minted because v10 planning used hidden exact-word verifier terms such
+as `Rewrite`, `Retest`, `Stop`, `Compare`, and `Rerun` without consistently
+naming them in the prompt. That made v10 planning a poor measure of the
+visible-constraint behavior we actually wanted.
+
+Results on v11:
+
+```text
+v12 adapter: 19/25 clean, planning 2/5
+v13 adapter: 23/25 clean, planning 4/5
+v14 adapter: 21/25 clean, planning 3/5
+```
+
+Interpretation: v13 is better than v14 on this fairer prompt-visible eval.
+Do not promote v14. Since v11 has now been used for comparison, the next clean
+capability claim requires a fresh unused v12 eval surface after the next repair.
 
 Code maintenance note:
 
