@@ -132,11 +132,13 @@ evidence. The old `v6-v17` clean-heldout files are withdrawn and should not be
 kept as eval files or gate inputs.
 
 Do not reuse a file as clean proof after its failures drive prompt, verifier, or
-data changes. Use model-backed eval only after the round design is frozen and a
-new unused `v6` capability surface exists:
+data changes. The current unused `v6` capability surface is
+`data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl` with 24
+verifier-backed rows:
 
 ```powershell
-python main.py main-eval --profile qwen3-8b-s2t-lite --input-file data\main_agent_v6_clean_heldout_seed.jsonl --json --timeout 900 --max-length-ratio 4
+python main.py main-check --input-file data\main_agent_v6_clean_capability_eval_seed_20260504.jsonl --min-total 24 --min-category 4 --json
+python main.py main-eval --profile qwen3-8b-s2t-lite --input-file data\main_agent_v6_clean_capability_eval_seed_20260504.jsonl --json --timeout 900 --max-length-ratio 4
 ```
 
 `local-release-gate` now reports no current clean claim surface, keeps only
