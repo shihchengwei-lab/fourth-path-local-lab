@@ -50,6 +50,8 @@ The Main Agent is a reasoning-only layer. Its system prompt (`MAIN_AGENT_SYSTEM_
 
 Both classifiers are fast, deterministic regex prefilters implemented entirely in Python (no model calls). `classify_input` checks the raw user prompt before any generation occurs; `classify_candidate` checks each generated candidate before it reaches Cold Eyes. They route traffic — flagging obvious canon violations and local formatting issues — but they are not final adjudicators. A candidate that clears both classifiers still must pass Mechanical Cold Eyes before it is returned to the caller.
 
+Canon-facing pattern data shared by these prefilters and the high-confidence Mechanical Cold Eyes fallback lives in `canon_patterns.py`; the deterministic regex helpers live in `canon_checks.py`. Role/control-plane boundary checks stay in `candidate_boundaries.py`; tool/action side-effect checks stay in `action_gate.py`.
+
 ### Mechanical Cold Eyes (`audit/` package)
 
 Mechanical Cold Eyes is the deterministic final adjudicator. It is implemented in `audit/engine.py`, `audit/policy.py`, and `audit/matcher.py` with no LLM dependency. At runtime, `mechanical_cold_eyes_review()` in `main.py` calls `run_audit(candidate, policy_path)`, which loads a JSON policy file, evaluates each rule's regex patterns against the candidate text, and returns a structured `AuditResult`. The verdict is binary: `pass` (no matches) or `fail` (one or more matches). The Cold Eyes layer is fail-closed: any error in policy loading, regex compilation, or matching produces a `fail` verdict, never a `pass` (see [Fail-closed properties](#fail-closed-properties) below).
