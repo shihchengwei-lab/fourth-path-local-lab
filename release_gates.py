@@ -38,6 +38,7 @@ MAIN_RELEASE_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("latent_probe", "data/main_agent_latent_probe_seed.jsonl", 8, 2),
 )
 CAPABILITY_DEV_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
+    ("regression_repair", "data/main_agent_regression_repair_seed_20260504.jsonl", 10, 2),
     ("v6_capability_repair", "data/main_agent_v6_capability_repair_seed_20260504.jsonl", 24, 4),
 )
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))

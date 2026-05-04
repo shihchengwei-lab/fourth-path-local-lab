@@ -2607,6 +2607,12 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["main_corpora"]["latent_probe"]["total"], 8)
         self.assertEqual(data["main_corpora"]["v5_clean_heldout"]["total"], 24)
         self.assertEqual(data["main_corpora"]["v5_clean_heldout"]["verifier_records"], 24)
+        self.assertEqual(data["capability_dev_corpora"]["regression_repair"]["total"], 10)
+        self.assertEqual(
+            data["capability_dev_corpora"]["regression_repair"]["verifier_records"],
+            10,
+        )
+        self.assertEqual(data["capability_dev_corpora"]["regression_repair"]["errors"], [])
         self.assertEqual(data["capability_dev_corpora"]["v6_capability_repair"]["total"], 24)
         self.assertEqual(
             data["capability_dev_corpora"]["v6_capability_repair"]["verifier_records"],
@@ -2643,6 +2649,12 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(
             any(
                 path.endswith("main_agent_v6_capability_repair_seed_20260504.jsonl")
+                for path in data["sft_format"]["source_paths"]
+            )
+        )
+        self.assertFalse(
+            any(
+                path.endswith("main_agent_regression_repair_seed_20260504.jsonl")
                 for path in data["sft_format"]["source_paths"]
             )
         )
