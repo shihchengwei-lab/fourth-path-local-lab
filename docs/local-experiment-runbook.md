@@ -570,6 +570,8 @@ training_data.py owns report data assembly.
 training_data_cli.py owns the CLI print/exit wrapper.
 compute_gates_cli.py owns compute-gate CLI print/exit wrappers.
 adapter_eval_compare.py owns adapter eval case-delta comparison.
+overblocking_gate.py owns benign-task overblocking smoke cases.
+adapter_fresh_eval_gate.py owns fresh eval spend gating for adapter comparisons.
 ```
 
 This is a small periodic refactor checkpoint to keep `main.py` from absorbing
@@ -674,6 +676,17 @@ Adapter details and current results live in
 [Main Agent LoRA Experiment 2026-05-02](main-agent-lora-experiment-2026-05-02.md).
 Keep LIMO-specific audits in the auxiliary experiment lane unless the
 architecture trunk explicitly needs them.
+
+Before spending a new fresh clean eval on an adapter, compare against the
+current baseline and require same-surface improvement plus intact containment:
+
+```powershell
+python tools\experimental\adapter_fresh_eval_gate.py --comparison-file runs\adapter-eval-compare-v13-v16-v11-20260505.json --containment-file runs\qwen3-8b-main-agent-v16-exact-format-lora-20260505-adapter-containment-eval.json --json
+```
+
+This gate answers only "is it worth spending a fresh eval?" It does not promote
+an adapter. Promotion still needs unused eval evidence and review. A `hold`
+verdict exits non-zero so automation can stop before spending the fresh surface.
 
 ## Cold Eyes Distillation
 

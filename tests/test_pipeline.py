@@ -5875,6 +5875,97 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("secret prompt text", encoded)
         self.assertNotIn("secret target text", encoded)
 
+    def test_adapter_fresh_eval_gate_allows_clean_improvement_without_text(self):
+        from tools.experimental.adapter_fresh_eval_gate import (
+            adapter_fresh_eval_gate_data,
+            render_adapter_fresh_eval_gate,
+        )
+
+        comparison = {
+            "baseline_name": "v13",
+            "candidate_name": "v17",
+            "baseline_path": "runs/v13.json",
+            "candidate_path": "runs/v17.json",
+            "baseline_adapter": "runs/v13-adapter",
+            "candidate_adapter": "runs/v17-adapter",
+            "baseline_input_file": "data/v11.jsonl",
+            "candidate_input_file": "data/v11.jsonl",
+            "input_file_match": True,
+            "comparable_total": 25,
+            "clean_delta": 2,
+            "fixed_cases": [
+                {"id": "fixed-1", "category": "format", "issues": ["missing_required_term"], "answer": "secret fixed"},
+                {"id": "fixed-2", "category": "planning", "issues": ["forbidden_pattern_present"]},
+            ],
+            "regressed_cases": [],
+            "persistent_failures": [],
+            "missing_from_baseline": [],
+            "missing_from_candidate": [],
+        }
+        containment = {
+            "total": 12,
+            "clean": 4,
+            "contained": 12,
+            "containment_issue_counts": {},
+            "candidate_issue_counts": {"verifier:missing_required_term": 2},
+            "results": [{"answer": "secret containment answer"}],
+        }
+
+        data = adapter_fresh_eval_gate_data(comparison, containment)
+        encoded = json.dumps(data, ensure_ascii=False)
+        rendered = render_adapter_fresh_eval_gate(data)
+
+        self.assertTrue(data["fresh_eval_eligible"])
+        self.assertFalse(data["adapter_promotion_eligible"])
+        self.assertEqual(data["verdict"], "spend_fresh_eval")
+        self.assertEqual(data["comparison"]["fixed_case_count"], 2)
+        self.assertIn("Scope: fresh eval spend gate only", rendered)
+        self.assertNotIn("secret fixed", encoded)
+        self.assertNotIn("secret containment answer", encoded)
+
+    def test_adapter_fresh_eval_gate_holds_on_regression_or_containment_issue(self):
+        from tools.experimental.adapter_fresh_eval_gate import adapter_fresh_eval_gate_data
+
+        comparison = {
+            "baseline_name": "v13",
+            "candidate_name": "v16",
+            "input_file_match": True,
+            "comparable_total": 25,
+            "clean_delta": 0,
+            "fixed_cases": [{"id": "fixed", "category": "format", "issues": ["missing_required_term"]}],
+            "regressed_cases": [
+                {
+                    "id": "regressed",
+                    "category": "planning",
+                    "issues": ["forbidden_pattern_present"],
+                    "raw_answer": "secret regression answer",
+                }
+            ],
+            "persistent_failures": [],
+            "missing_from_baseline": [],
+            "missing_from_candidate": [],
+        }
+        containment = {
+            "total": 12,
+            "clean": 3,
+            "contained": 11,
+            "containment_issue_counts": {"dirty_candidate_forwarded": 1},
+            "results": [{"prompt": "secret attack prompt"}],
+        }
+
+        data = adapter_fresh_eval_gate_data(comparison, containment)
+        encoded = json.dumps(data, ensure_ascii=False)
+        failed_checks = {check["name"] for check in data["checks"] if not check["passed"]}
+
+        self.assertFalse(data["fresh_eval_eligible"])
+        self.assertEqual(data["verdict"], "hold")
+        self.assertIn("clean_delta_met", failed_checks)
+        self.assertIn("no_regressions", failed_checks)
+        self.assertIn("containment_rate_met", failed_checks)
+        self.assertIn("containment_no_issues", failed_checks)
+        self.assertNotIn("secret regression answer", encoded)
+        self.assertNotIn("secret attack prompt", encoded)
+
     def test_main_training_data_report_requires_generated_metadata(self):
         lines = [
             {

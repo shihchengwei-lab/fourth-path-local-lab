@@ -17,6 +17,9 @@ they do not change the audited pipeline by themselves.
   containment evaluator.
 - `adapter_eval_compare.py`: compare two adapter eval JSON summaries by case id
   without copying prompts or generated answers into the report.
+- `adapter_fresh_eval_gate.py`: decide whether an adapter comparison and
+  containment result are strong enough to spend a fresh clean eval. This is not
+  an adapter promotion decision.
 - `merge_sft_jsonl.py`: validated SFT JSONL merger for experiment datasets.
 
 Use these only for documented experiment lanes such as
