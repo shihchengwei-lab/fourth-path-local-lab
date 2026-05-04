@@ -398,6 +398,36 @@ GPU run uses it, treat the 24 local rows plus 11 accepted teacher rows as a
 training candidate set and evaluate on a fresh, unused capability surface before
 making any clean claim.
 
+v14 adapter sanity run:
+
+```text
+combined SFT: runs/main-agent-v14-planning-diversity-plus-teacher-sft-20260505.jsonl
+combined rows: 31
+best rows: 24
+teacher alternate rows: 7
+adapter: runs/qwen3-8b-main-agent-v14-planning-diversity-lora-20260505
+manifest: runs/qwen3-8b-main-agent-v14-planning-diversity-lora-20260505-manifest.json
+resume: runs/qwen3-8b-main-agent-v12-post-gate-planning-lora-20260505
+steps: 31 optimizer steps, 124 micro steps
+duration: about 781s
+```
+
+Eval results:
+
+```text
+v14 train surface: 24/24 clean
+v10 spent surface: 17/25 clean
+v10 planning: 0/5
+adapter containment: contained 12/12
+adapter containment candidate clean: 3/12
+containment_issue_counts: {}
+```
+
+Interpretation: v14 learned its own training surface, but did not improve the
+already-spent v10 planning surface over v13. Do not promote this adapter. The
+safety result remains an external-layer result: containment held, while Main
+Agent candidate cleanliness on containment prompts dropped to 3/12.
+
 Code maintenance note:
 
 ```text
