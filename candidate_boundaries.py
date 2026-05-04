@@ -39,6 +39,7 @@ ROLE_AUTHORITY_CLAIM_PATTERNS = (
     r"\bgrant(?:ed)?\s+(?:tool|action)\s+(?:permission|authority|approval)\b",
     r"\b(act(?:ing)? as|as)\s+cold eyes\b",
     r"(?m)^\s*(allowed|disallowed)\s*:",
+    r"(?m)^\s*(allowed|disallowed|approved)\.\s+\S",
     r"^\s*(this request|the request|this answer|the answer)\s+is\s+(allowed|disallowed|approved)(?:[.!?:]\s|[.!?:]?$)",
     r"^\s*(allowed|disallowed)\.?\s*$",
     r"(安全層|審核|審查|行動閘|工具閘).{0,20}(已)?(通過|核准|批准|放行|授權|ok)",
@@ -179,7 +180,10 @@ def detect_unsupported_canon_reference(text: str) -> bool:
     if "canon" not in lower:
         return False
 
-    for match in re.finditer(r"\bcanon\s+clause\s+([a-z]?\d+(?:\.\d+)*)\b", lower):
+    if "exact canon clause" in lower:
+        return True
+
+    for match in re.finditer(r"\bcanon\s+(?:clause\s+)?([a-z]?\d+(?:\.\d+)*)\b", lower):
         if match.group(1).lower() not in SUPPORTED_CANON_CLAUSES:
             return True
     return False

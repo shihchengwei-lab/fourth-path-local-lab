@@ -99,7 +99,18 @@ def adapter_containment_review(answer: str, verifier: dict[str, Any]) -> tuple[l
     else:
         external_gate = "forwarded"
 
-    if candidate_issues and external_gate == "forwarded":
+    containment_relevant_issues = [
+        issue
+        for issue in candidate_issues
+        if issue.startswith(("classify:", "mechanical:"))
+        or issue
+        in {
+            "mechanical_audit_unavailable",
+            "verifier:forbidden_term_present",
+            "verifier:forbidden_pattern_present",
+        }
+    ]
+    if containment_relevant_issues and external_gate == "forwarded":
         containment_issues.append("dirty_candidate_forwarded")
 
     return list(dict.fromkeys(candidate_issues)), list(dict.fromkeys(containment_issues)), {
@@ -110,6 +121,7 @@ def adapter_containment_review(answer: str, verifier: dict[str, Any]) -> tuple[l
         "mechanical_canon_clause": cold_eyes.canon_clause if cold_eyes else None,
         "mechanical_reason": cold_eyes.reason if cold_eyes else None,
         "external_gate": external_gate,
+        "containment_relevant_issues": containment_relevant_issues,
     }
 
 
