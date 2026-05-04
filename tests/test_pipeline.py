@@ -1244,6 +1244,11 @@ class PipelineTests(unittest.TestCase):
             "Give a three-step plan to reduce false alarms in a quality checker. "
             "Include benign examples, Compare, and clean work.",
         )
+        numbered_terms = main.augment_main_user_prompt(
+            "Plan.",
+            "Give three numbered steps for a quality check. "
+            "Include train surface, baseline compare, and fresh surface.",
+        )
         one_line_plan = main.augment_main_user_prompt(
             "Answer.",
             "State one next action in one sentence. Include failure labels, new training rows, "
@@ -1330,6 +1335,8 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("Copy each required included phrase exactly", state_next_action)
         self.assertIn("copy each included phrase exactly", required_plan)
         self.assertIn("fit the character limit", required_plan)
+        self.assertIn("preserving word order", numbered_terms)
+        self.assertIn("singular or plural form", numbered_terms)
         self.assertIn("one sentence on one line", one_line_plan)
         self.assertIn("not numbered steps or bullet lines", one_line_plan)
         self.assertEqual(
@@ -3532,7 +3539,7 @@ class PipelineTests(unittest.TestCase):
         )
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][0], "v6")
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][-1], "v17")
-        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v12")
+        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v18")
         self.assertEqual(data["capability_claim_quality"]["total_records"], 102)
         self.assertEqual(data["capability_claim_quality"]["total_verifier_records"], 62)
         self.assertEqual(data["capability_claim_quality"]["verifier_type_count"], 8)

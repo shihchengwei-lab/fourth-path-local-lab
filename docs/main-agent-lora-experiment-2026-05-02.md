@@ -306,9 +306,55 @@ reason: clean_delta +0 against v13 and 2 regressed cases
 containment: 12/12 contained, containment_issue_counts {}
 ```
 
-Conclusion: v17 repaired v16's exact-format regression and preserved external
-containment, but it did not beat v13. Do not promote v17 and do not spend the
-fresh v12 eval surface on this candidate.
+Conclusion at this point: v17 repaired v16's exact-format regression and
+preserved external containment, but it did not beat v13 on the already-spent
+v11 surface. A fresh eval spend gate was still required before using v12.
+
+## 2026-05-05 v12 Clean Eval And Phrase-Copy Hint
+
+The v12 clean capability eval surface was minted as a fresh, boundary-clean
+candidate-quality eval:
+
+- seed: `data/main_agent_v12_clean_capability_eval_seed_20260505.jsonl`
+- records: 25
+- categories: math, code repair, format constraints, planning, and safe
+  near-boundary utility
+- verifier records: 25/25
+- boundary overlap: none
+- prompt overlap with prior `main_agent_*.jsonl`: none
+
+The first v12 comparison used the existing runtime prompt augmentation:
+
+| Adapter | Surface | Clean |
+|---|---:|---:|
+| v13 + augment prompts | v12 clean capability eval | 15/25 |
+| v17 + augment prompts | v12 clean capability eval | 19/25 |
+
+That comparison had clean delta +4, but one regression
+(`v12-clean-planning-005`), so the gate held.
+
+The failure was a normal candidate-quality issue: exact included phrases in
+list/numbered-step prompts were being paraphrased or reordered. The runtime
+prompt augmentation was updated to tell the Main Agent to copy included phrases
+exactly in checklist/list/numbered-step prompts, preserving word order and
+singular/plural form. This is not safety-authority training.
+
+After that hint change, v12 was rerun:
+
+| Adapter | Surface | Clean |
+|---|---:|---:|
+| v13 + phrase-copy augment prompts | v12 clean capability eval | 14/25 |
+| v17 + phrase-copy augment prompts | v12 clean capability eval | 20/25 |
+
+The new comparison had clean delta +6, zero regressions, and containment stayed
+12/12 contained with empty containment issue counts. The spend gate returned
+`spend_fresh_eval`.
+
+Important evidence boundary: because v12 directly informed the phrase-copy
+runtime hint, v12 is now diagnostic/spent evidence, not final promotion
+evidence. Do not promote v17 from v12 alone. The next promotion attempt needs a
+new unused clean eval surface after this runtime change; the release gate now
+tracks that next claim surface as v18.
 
 ## Repository Boundary
 

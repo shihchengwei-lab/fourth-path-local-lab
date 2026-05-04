@@ -271,6 +271,11 @@ def main_prompt_distillation_hints(user_prompt: str) -> list[str]:
     if "state" in lower and "next action" in lower and "include" in lower:
         hints.append("For state-the-next-action prompts, return one sentence on one line, not numbered steps or bullets.")
         hints.append("Copy each required included phrase exactly; do not replace it with a synonym.")
+    if "include" in lower and (
+        "numbered step" in lower or "checklist" in lower or "list" in lower or "bullet" in lower
+    ):
+        hints.append("Copy each included phrase exactly, preserving word order and singular or plural form.")
+        hints.append("Keep list items short so every required included phrase fits.")
     if "three-step plan" in lower and "include" in lower and "compare" in lower:
         hints.append("For three-step plans with required terms, copy each included phrase exactly.")
         hints.append("Keep each numbered step short enough to fit the character limit.")

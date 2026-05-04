@@ -65,9 +65,9 @@ BOUNDARY_CLEAN_CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str], ...] = (
 )
 CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))
-NEXT_CAPABILITY_CLAIM_VERSION = "v12"
+NEXT_CAPABILITY_CLAIM_VERSION = "v18"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
-    "mint a fresh unused v12 capability eval surface after the next repair"
+    "mint a fresh unused v18 capability eval surface after the phrase-copy runtime hint and next repair"
 )
 
 

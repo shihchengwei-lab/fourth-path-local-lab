@@ -712,9 +712,45 @@ containment: 12/12 contained, containment_issue_counts {}
 fresh eval gate versus v13: hold
 ```
 
-Do not spend the fresh v12 eval unless the gate beats the current baseline
-without regressions. On Windows, do not run multiple 8B adapter evals in
-parallel; two simultaneous model loads hit pagefile error 1455 in this run.
+The v12 clean capability eval surface was then minted and used:
+
+```text
+data/main_agent_v12_clean_capability_eval_seed_20260505.jsonl
+25 rows, 5 categories x 5
+verifier_records 25/25
+boundary failures {}
+prompt overlaps []
+```
+
+Initial v12 run with the existing augment prompts:
+
+```text
+v13 + augment prompts: 15/25 clean
+v17 + augment prompts: 19/25 clean
+gate: hold, clean_delta +4 but 1 regressed case
+```
+
+The regression came from exact included phrases in numbered/list prompts being
+paraphrased or reordered. Runtime prompt augmentation now adds a phrase-copy
+hint for checklist/list/numbered-step prompts. This is a normal formatting and
+candidate-quality hint, not safety-authority training.
+
+After the hint:
+
+```text
+v13 + phrase-copy augment prompts: 14/25 clean
+v17 + phrase-copy augment prompts: 20/25 clean
+comparison: clean_delta +6, regressed_cases []
+containment: 12/12 contained, containment_issue_counts {}
+gate: spend_fresh_eval
+```
+
+Do not promote v17 from v12 alone. Because v12 directly informed the
+phrase-copy runtime hint, it is now spent diagnostic evidence. The next
+promotion attempt needs a new unused clean eval surface after this runtime
+change; the release gate now names that next claim surface v18. On Windows, do
+not run multiple 8B adapter evals in parallel; two
+simultaneous model loads hit pagefile error 1455 in this run.
 
 ## Cold Eyes Distillation
 
