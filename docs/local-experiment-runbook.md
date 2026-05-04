@@ -148,6 +148,10 @@ including `data/main_agent_regression_repair_seed_20260504.jsonl` and the v6
 repair seed. This keeps repair lanes valid without treating them as clean
 evidence or adding them to the default SFT export set.
 
+The same gate also checks repair-seed provenance: each row must keep
+`split=train_seed`, `evidence_level=train_seed_not_capability_evidence`,
+`clean_claim_eligible=false`, and a non-empty `source`.
+
 `local-release-gate` now reports no current clean claim surface, keeps only
 legacy `v5` as non-evidence context, and records old `v6-v17` as withdrawn. A
 new post-training `v6` eval surface is required for the next capability claim.

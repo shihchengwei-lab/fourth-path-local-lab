@@ -2619,6 +2619,14 @@ class PipelineTests(unittest.TestCase):
             24,
         )
         self.assertEqual(data["capability_dev_corpora"]["v6_capability_repair"]["errors"], [])
+        self.assertEqual(data["capability_dev_provenance"]["total_records"], 34)
+        self.assertEqual(data["capability_dev_provenance"]["split_counts"], {"train_seed": 34})
+        self.assertEqual(
+            data["capability_dev_provenance"]["evidence_level_counts"],
+            {"train_seed_not_capability_evidence": 34},
+        )
+        self.assertEqual(data["capability_dev_provenance"]["clean_claim_eligible_counts"], {"false": 34})
+        self.assertEqual(data["capability_dev_provenance"]["errors"], [])
         for version in range(6, 18):
             self.assertNotIn(f"v{version}_clean_heldout", data["main_corpora"])
         self.assertEqual(data["data_quality"]["verifier_type_count"], 8)

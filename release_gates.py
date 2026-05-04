@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -41,6 +42,7 @@ CAPABILITY_DEV_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("regression_repair", "data/main_agent_regression_repair_seed_20260504.jsonl", 10, 2),
     ("v6_capability_repair", "data/main_agent_v6_capability_repair_seed_20260504.jsonl", 24, 4),
 )
+CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))
 NEXT_CAPABILITY_CLAIM_VERSION = "v6"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
@@ -373,6 +375,81 @@ def capability_dev_corpus_checks(project_root: Path) -> dict[str, Any]:
     }
 
 
+def capability_dev_provenance_checks(project_root: Path) -> dict[str, Any]:
+    files: list[dict[str, Any]] = []
+    errors: list[str] = []
+    total_records = 0
+    split_counts: dict[str, int] = {}
+    evidence_level_counts: dict[str, int] = {}
+    clean_claim_eligible_counts: dict[str, int] = {}
+
+    for key, relative_path, _, _ in CAPABILITY_DEV_CORPUS_SPECS:
+        path = project_root / relative_path
+        file_errors: list[str] = []
+        file_total = 0
+        if not path.exists():
+            file_errors.append(f"file not found: {path}")
+        else:
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if not line.strip():
+                    continue
+                file_total += 1
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    file_errors.append(f"line {line_number}: invalid JSON: {exc.msg}")
+                    continue
+                if not isinstance(row, dict):
+                    file_errors.append(f"line {line_number}: row must be an object")
+                    continue
+
+                split = row.get("split")
+                evidence_level = row.get("evidence_level")
+                clean_claim_eligible = row.get("clean_claim_eligible")
+                source = row.get("source")
+                split_label = split if isinstance(split, str) and split.strip() else "missing"
+                evidence_label = (
+                    evidence_level
+                    if isinstance(evidence_level, str) and evidence_level.strip()
+                    else "missing"
+                )
+                clean_label = str(clean_claim_eligible).lower()
+                split_counts[split_label] = split_counts.get(split_label, 0) + 1
+                evidence_level_counts[evidence_label] = evidence_level_counts.get(evidence_label, 0) + 1
+                clean_claim_eligible_counts[clean_label] = clean_claim_eligible_counts.get(clean_label, 0) + 1
+
+                if split != "train_seed":
+                    file_errors.append(f"line {line_number}: split must be train_seed for capability dev corpus")
+                if evidence_level not in CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS:
+                    file_errors.append(
+                        f"line {line_number}: evidence_level must be train_seed_not_capability_evidence"
+                    )
+                if clean_claim_eligible is not False:
+                    file_errors.append(f"line {line_number}: clean_claim_eligible must be false")
+                if not isinstance(source, str) or not source.strip():
+                    file_errors.append(f"line {line_number}: source must be a non-empty string")
+
+        total_records += file_total
+        files.append(
+            {
+                "key": key,
+                "path": str(path),
+                "total": file_total,
+                "errors": file_errors,
+            }
+        )
+        errors.extend(f"{key}: {error}" for error in file_errors)
+
+    return {
+        "total_records": total_records,
+        "split_counts": dict(sorted(split_counts.items())),
+        "evidence_level_counts": dict(sorted(evidence_level_counts.items())),
+        "clean_claim_eligible_counts": dict(sorted(clean_claim_eligible_counts.items())),
+        "files": files,
+        "errors": errors,
+    }
+
+
 def main_data_quality_summary(quality: dict[str, Any]) -> dict[str, Any]:
     return {
         "total_records": quality["total_records"],
@@ -407,6 +484,7 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
     architecture_pressures = architecture_pressure_checks(config.project_root)
     main_corpus_checks = main_release_corpus_checks(config.project_root)
     capability_dev_checks = capability_dev_corpus_checks(config.project_root)
+    capability_dev_provenance = capability_dev_provenance_checks(config.project_root)
     clean_heldout_checks, clean_heldout_paths = legacy_clean_heldout_checks(config.project_root)
     data_quality = config.main_data_quality_check_data(list(config.main_data_quality_files))
     sft_format = config.sft_export_format_gate_data(list(config.main_data_quality_files))
@@ -430,6 +508,7 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
         errors.extend(prefixed_errors(f"main_{key}", check.errors))
     for key, check in capability_dev_checks.items():
         errors.extend(prefixed_errors(f"capability_dev_{key}", check.errors))
+    errors.extend(prefixed_errors("capability_dev_provenance", capability_dev_provenance["errors"]))
     errors.extend(prefixed_errors("data_quality", data_quality["errors"]))
     errors.extend(prefixed_errors("capability_claim_quality", data_quality["errors"]))
     errors.extend(prefixed_errors("sft_format", sft_format["errors"]))
@@ -452,6 +531,7 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
         "capability_dev_corpora": {
             key: check.public_dict() for key, check in capability_dev_checks.items()
         },
+        "capability_dev_provenance": capability_dev_provenance,
         "data_quality": main_data_quality_summary(data_quality),
         "capability_claim_quality": capability_claim_quality_summary(
             data_quality,
@@ -529,6 +609,12 @@ def render_local_release_gate(data: dict[str, Any]) -> str:
             latent_probe=data["main_corpora"]["latent_probe"]["total"],
         ),
         f"Capability dev corpora: {capability_dev_summary}",
+        (
+            "Capability dev provenance: records={total_records}, errors={error_count}"
+        ).format(
+            total_records=data["capability_dev_provenance"]["total_records"],
+            error_count=len(data["capability_dev_provenance"]["errors"]),
+        ),
         f"Legacy clean heldout files (not evidence): {clean_heldout_summary}",
         "Withdrawn clean heldout files: old v6-v17 removed",
         "Capability evidence: no current clean claim surface; next proof restarts at v6",
