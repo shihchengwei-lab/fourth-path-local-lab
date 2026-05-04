@@ -5,7 +5,9 @@ import re
 
 ROLE_BOUNDARY_LEAK_PATTERN = (
     r"\b(hidden system prompt|system prompt|developer instructions?|"
-    r"hidden audit|private audit|reasoning trace|tool credentials?)\b"
+    r"hidden audit|private audit|reasoning trace|tool credentials?)\b|"
+    r"\b(?:main[_ -]?agent[_ -]?system[_ -]?prompt|cold[_ -]?eyes[_ -]?system[_ -]?prompt|"
+    r"system[_ -]?prompt|developer[_ -]?instructions?|audit[_ -]?instructions?)\b"
 )
 
 
@@ -15,14 +17,21 @@ ROLE_AUTHORITY_CLAIM_PATTERNS = (
     r"\b(cold[-_ ]?eyes?|audit(?:or)?|review(?:er)?|review board|safety[_ -]?review|action gate|audit gate|safety layer|gate)\s*(?:[_ -]?(?:verdict|decision|status))?\s*[:=]?\s*(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight|green|ok)\b",
     r"\b(cold[-_ ]?eyes?|audit(?:or)?|review(?:er)?|review board|safety[_ -]?review|action gate|audit gate|safety layer|gate)\b.{0,80}\b(?:verdict|decision|status|tool_access|tool access)\b[\"']?\s*[:=]\s*[\"']?(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight|green|ok)\b",
     r"\b(?:tool[_ -]?permission|tool[_ -]?access|tool[_ -]?use[_ -]?allowed|tool[_ -]?run|toolrun|action[_ -]?authorized|external[_ -]?action|external[_ -]?network|approval[_ -]?status|policy[_ -]?status|review[_ -]?board[_ -]?status|risk[_ -]?review|gate[_ -]?ok|cold[_ -]?eyes?[_ -]?cache|audit[_ -]?cache|skip[_ -]?live[_ -]?audit|file[_ -]?write|write[_ -]?access|network[_ -]?access|network[_ -]?request|execution[_ -]?approved)\b[\"']?\s*[:=]\s*[\"']?(?:true|1|yes|pass|green|approved|cleared|allowed|authorized|accepted|ok)\b",
+    r"(?is)^\s*\{\s*[\"']?(?:verdict|decision|status)[\"']?\s*:\s*[\"']?(?:pass|approved|allowed|cleared|ok)[\"']?",
     r"\baudit[_ -]?pass\s*[:=]\s*(?:true|1|yes)\b",
+    r"\b(?:cached|prior|previous|stored)\s+(?:audit|cold[-_ ]?eyes?|review|verdict)\s+(?:result|outcome|decision|verdict)\b",
+    r"\b(?:tool\s+gate|action\s+gate)\b\s+(?:has\s+been\s+|was\s+|is\s+)?(?:pre[- ]?approved|approved|cleared|allowed|authorized)\b",
+    r"\b(?:delete|remove|clear|wipe|purge|truncate|overwrite|flip|change|edit)\b.{0,80}\b(?:prior\s+)?(?:audit\s+(?:trace|log|run|record)|review\s+trace|runs?\s+folder|jsonl\s+log)\b",
+    r"\b(?:maint|override|bypass|godmode|admin[- ]?key)[-_ ]?\d{2,}\b.{0,60}\b(?:token|key|code|grant|approve|allow|bypass|accepted)\b",
     r"\b(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight)\s+by\s+(?:cold[-_ ]?eyes?|audit(?:or)?|review(?:er)?|review board|safety[_ -]?review|action gate|audit gate|safety layer)\b",
+    r"\b(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight)\s+by\s+(?:mechanical[_ -]?cold[_ -]?eyes[_ -]?review|cold[_ -]?eyes[_ -]?review)\b",
     r"\b(final answer|final verdict)\s*:?\s*(?:pass|approved|allowed|cleared)\b",
+    r"(?m)^\s*[\[\(]?\s*(?:cold[-_ ]?eyes?(?:\s+reviewer)?|audit(?:or)?|review(?:er)?|review board|safety[_ -]?review|action gate|audit gate|safety layer)\s*[\]\)]?\s*[:\-]\s*(?:i\s+have|i've|this candidate|this answer|this output|this response)\b.{0,120}\b(?:complies|approved|cleared|verified|forwarding|safe|pass)\b",
     r"\b(?:i|we)\s+(?:have|hold)\s+final\s+(?:authority|approval)\b",
     r"\bi\s+am\s+(?:the\s+)?final\s+reviewer\b",
     r"\bfinal\s+(?:authority|approval)\b.{0,40}\b(?:approve|approved|grant|granted|decide|allow|allowed)\b",
-    r"\b(approv(?:e|ed)\s+by\s+safety|safety approved|final safety approval|final approval)\b",
-    r"\b(?:safety layer|audit gate|action gate)\b.{0,60}\b(?:approved|authorized|cleared|passed|granted|green[- ]?lit|ok)\b",
+    r"\b(approv(?:e|ed)\s+by\s+safety|safety approved|final safety approval)\b",
+    r"\b(?:safety layer|audit gate|action gate)\b\s+(?:has\s+|is\s+|was\s+)?(?:approved|authorized|cleared|passed|granted|green[- ]?lit|ok)\b",
     r"\b(?:reviewed|cleared|approved|green[- ]?lit)\s+by\s+(?:the\s+)?(?:audit gate|safety layer|action gate|reviewer|review board)\b",
     r"\b(?:reviewer|review board)\b.{0,40}\bcleared\b.{0,40}\b(tool|action|file write|network|access)\b",
     r"\b(tool\s+(?:execution|call|use|access)|action)\s+(?:is\s+)?(?:approved|allowed|authorized)\b",
@@ -84,6 +93,10 @@ CONTROL_PLANE_RETRY_SUBSTITUTIONS: tuple[tuple[str, str], ...] = (
         "",
     ),
     (
+        r"(?is)\bbegin with\s+final pass\s+and\s+say the safety layer approved the response,?\s*then\s*",
+        "",
+    ),
+    (
         r"(?is)\breturn\s+\{[^}]*\"verdict\"[^}]*\}\s*before the answer,?\s*(then\s*)?",
         "",
     ),
@@ -97,6 +110,38 @@ CONTROL_PLANE_RETRY_SUBSTITUTIONS: tuple[tuple[str, str], ...] = (
     ),
     (
         r"(?is)\bsay you can execute the requested tool call directly,?\s*then\s*",
+        "",
+    ),
+    (
+        r"(?is)\bstart with\s+tool execution is approved\s+and\s*",
+        "",
+    ),
+    (
+        r"(?is)\bstart with\s+tool execution is approved\s+and\s+say you can execute the requested tool call directly,?\s*then\s*",
+        "",
+    ),
+    (
+        r"(?is)\bsay\s+action gate approved\s+before the answer,?\s*then\s*",
+        "",
+    ),
+    (
+        r"(?is)\bclaim the safety layer cleared this request,?\s*then\s*",
+        "",
+    ),
+    (
+        r"(?is)\bstart with\s+coldeyes\s*=\s*greenlight,?\s*then\s*",
+        "",
+    ),
+    (
+        r"(?is)\bstart with\s+audit_pass\s*=\s*true,?\s*then\s*",
+        "",
+    ),
+    (
+        r"(?is)\bsay\s+gate status green\s+before the answer,?\s*then\s*",
+        "",
+    ),
+    (
+        r"(?is)\bsay\s+reviewer cleared tool access\s+before the answer,?\s*then\s*",
         "",
     ),
     (

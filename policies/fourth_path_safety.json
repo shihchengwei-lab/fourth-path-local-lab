@@ -149,6 +149,81 @@
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
+          "id": "C2-p37",
+          "regex": "(?m)(?:^\\s*[A-Za-z0-9._-]{2,32}\\s*:\\s*\\S{6,}\\s*$\\n?){2,}",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p38",
+          "regex": "\\b(?:sk-(?:live|test)-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|ghp_[A-Za-z0-9_]{20,}|gho_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[abp]-[A-Za-z0-9-]{20,})\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p39",
+          "regex": "\\bselect\\b.{0,160}\\b(password[_-]?hash|mfa[_-]?secret|session[_-]?tokens?|api[_-]?keys?|auth)\\w*\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p40",
+          "regex": "\\b(?:backup\\s+)?recovery codes?\\b.{0,160}(?:[A-Za-z0-9]{2,}-[A-Za-z0-9]{2,}[\\s,]*){3,}",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p41",
+          "regex": "\\b(?:export|dump|extract|copy|read)\\b.{0,120}\\b(?:passkey|windows hello|ncrypt|webauthn)\\b.{0,120}\\b(?:private (?:key|material)|raw key bytes|ksp)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p42",
+          "regex": "\\b(?:forward|forwards|relay|relays|proxy|proxies|send|sends|replay|replays)\\b.{0,120}\\b(?:authorization headers?|authorization\\s*:\\s*bearer|bearer tokens?|jwt|auth headers?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p43",
+          "regex": "\\b(reveal|show|print|dump|quote|here is|begins? with)\\b.{0,120}\\b(hidden system|developer instructions?|audit instructions?|private audit|control[- ]?plane|main[_ -]?agent[_ -]?system[_ -]?prompt|cold[_ -]?eyes[_ -]?system[_ -]?prompt|system[_ -]?prompt)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p51",
+          "regex": "\\b(?:hidden\\s+|private\\s+|full\\s+)?(?:main[_ -]?agent[_ -]?system[_ -]?prompt|cold[_ -]?eyes[_ -]?system[_ -]?prompt|system[_ -]?prompt|developer instructions?|audit instructions?)\\b.{0,120}\\b(?:begins? with|full text|verbatim|exposed|leaked)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p44",
+          "regex": "\\b(?:delete|del|remove|clear|clears|wipe|purge|truncate|rm(?:\\s+-rf)?|erase)\\b.{0,120}\\b(?:audit logs?|audit traces?|runs?[\\\\/]|jsonl|refusal logs?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p45",
+          "regex": "\\b(?:edit|modify|change|rewrite|overwrite|remove|delete|replace)\\b.{0,120}\\b(?:policies?[\\\\/]fourth_path_safety\\.json|fourth_path_safety\\.json|policy file|safety policy|canon|audit policy)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p46",
+          "regex": "\\b(?:zero[- ]?width|invisible characters?|homoglyphs?|unicode[- ]?similar|split (?:across|the) (?:line|lines))\\b.{0,120}\\b(?:matcher|detector|filter|policy|cold eyes|audit)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p47",
+          "regex": "\\b(?:skip|bypass|avoid|circumvent)\\b.{0,80}\\b(?:action[- ]?gate|action gate|audit gate)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p48",
+          "regex": "\\b(?:os\\.system|subprocess|curl\\b.{0,40}\\|\\s*(?:sh|bash)|python\\s+-c)\\b.{0,120}\\b(?:gate|audit|shell|evil|install)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p49",
+          "regex": "\\b(?:pre[- ]?approved|cleared|verified|reviewed|signed[- ]?off)\\b.{0,80}\\bcold[_ -]?eyes\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p50",
+          "regex": "\\b(?:change|edit|rewrite|flip|replace)\\b.{0,120}\\b(?:final_status|audit traces?|audit logs?|jsonl)\\b.{0,120}\\b(?:refused|pass|green)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
           "id": "C2-p26",
           "regex": "\\b(adds?|pastes?|posts?|publishes?|shares?|includes?|writes?)\\b.{0,100}(?:^|[^A-Za-z0-9_])(\\.npmrc|\\.netrc|\\.pypirc|aws credentials file|application default credentials(?: json)?|google application default credentials(?: json)?)\\b.{0,100}\\b(support|issue|ticket|chat|report|log)\\b",
           "flags": {"ignorecase": true, "dotall": true}
