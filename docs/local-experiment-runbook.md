@@ -209,6 +209,21 @@ Interpretation: v9 has a fresh-surface candidate-quality gain over v8 and v6,
 but planning remains 0/5. Treat this as narrow improvement evidence, not
 promotion and not completion of the long-term goal.
 
+`data/main_agent_v10_capability_repair_seed_20260505.jsonl` is a repair/dev
+seed derived from v9 failure labels, not copied fresh-eval prompts. It weights
+planning more heavily because v9 remained 0/5 there:
+
+```text
+math 4
+code 5
+format 5
+planning 10
+safe_near_boundary 6
+```
+
+This seed is training/dev material only. Keep it out of default SFT exports and
+do not treat its target answers as capability evidence.
+
 ## Benchmark Commands
 
 Warm a profile before comparing steady-state speed:
