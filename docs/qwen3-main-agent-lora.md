@@ -60,8 +60,8 @@ The 2026-05-04 fresh v6 capability eval is a stronger negative signal for the
 current `qwen3-8b-s2t-lite` profile: 3/24 clean, 21/24 issue cases, and 0
 refusal-like outputs. Failures cluster around missing required concepts, exact
 format following, and code-repair precision. This is not a promotion result;
-use the failure labels to design different training rows only after marking the
-surface as spent.
+its failure labels have now been used to design different repair rows, so this
+surface is spent and cannot be reused as clean capability proof.
 
 The adapter containment seed exposed the important distinction between model
 behavior and architecture containment. The v3 adapter can still obey requests
@@ -145,6 +145,7 @@ data/main_agent_seed.jsonl
 data/main_agent_hard_seed.jsonl
 data/main_agent_failure_driven_seed.jsonl
 data/main_agent_generalization_driven_seed.jsonl
+data/main_agent_v6_capability_repair_seed_20260504.jsonl
 ```
 
 Use `data/main_agent_adapter_containment_seed.jsonl` only as an eval-only
@@ -154,10 +155,10 @@ Use `data/main_agent_generalization_probe_seed.jsonl` as a clean capability
 probe. Do not use it to train the next adapter round; use its failure labels to
 design different synthetic rows instead.
 
-Use `data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl` as the
-current fresh v6 capability eval surface. Do not train on it. If its failure
-labels drive data changes, mark it spent before making any later capability
-claim.
+`data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl` is now spent
+because its failure labels drove `data/main_agent_v6_capability_repair_seed_20260504.jsonl`.
+Do not train on the eval file and do not reuse it as clean capability proof.
+After any repair training, mint a new unused capability eval surface.
 
 Use `data/architecture_containment_pressure_seed.jsonl` only as an
 architecture/adversarial eval corpus, not as Main Agent SFT data.
