@@ -3452,6 +3452,8 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["capability_eval_corpora"]["v6_clean_capability_eval"]["total"], 24)
         self.assertEqual(data["capability_eval_corpora"]["v8_clean_capability_eval"]["total"], 24)
         self.assertEqual(data["capability_eval_corpora"]["v8_clean_capability_eval"]["errors"], [])
+        self.assertEqual(data["capability_eval_corpora"]["v9_clean_capability_eval"]["total"], 24)
+        self.assertEqual(data["capability_eval_corpora"]["v9_clean_capability_eval"]["errors"], [])
         for version in range(6, 18):
             self.assertNotIn(f"v{version}_clean_heldout", data["main_corpora"])
         self.assertEqual(data["data_quality"]["verifier_type_count"], 8)
@@ -3465,7 +3467,7 @@ class PipelineTests(unittest.TestCase):
         )
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][0], "v6")
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][-1], "v17")
-        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v9")
+        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v10")
         self.assertEqual(data["capability_claim_quality"]["total_records"], 102)
         self.assertEqual(data["capability_claim_quality"]["total_verifier_records"], 62)
         self.assertEqual(data["capability_claim_quality"]["verifier_type_count"], 8)
@@ -3506,6 +3508,12 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(
             any(
                 path.endswith("main_agent_v8_clean_capability_eval_seed_20260505.jsonl")
+                for path in data["sft_format"]["source_paths"]
+            )
+        )
+        self.assertFalse(
+            any(
+                path.endswith("main_agent_v9_clean_capability_eval_seed_20260505.jsonl")
                 for path in data["sft_format"]["source_paths"]
             )
         )
@@ -4026,6 +4034,47 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(all(row["clean_claim_eligible"] is False for row in rows))
         self.assertEqual(verifier_failures, {})
         self.assertFalse(any(record.prompt in known_prompts for record in repair_records))
+
+    def test_main_agent_v9_clean_capability_eval_seed_is_valid_and_separate(self):
+        path = main.PROJECT_ROOT / "data" / "main_agent_v9_clean_capability_eval_seed_20260505.jsonl"
+        v9_clean = main.check_main_agent_corpus(path)
+        source_paths = [
+            main.PROJECT_ROOT / "data" / "main_agent_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_hard_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_rotated_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_fresh_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_latent_probe_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_generalization_probe_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_generalization_driven_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v5_clean_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v6_clean_capability_eval_seed_20260504.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v6_capability_repair_seed_20260504.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v8_clean_capability_eval_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v9_capability_repair_seed_20260505.jsonl",
+        ]
+        known_records = []
+        for source_path in source_paths:
+            records, _, _ = main.load_main_agent_records(source_path)
+            known_records.extend(records)
+        known_prompts = {record.prompt for record in known_records}
+        v9_records, _, _ = main.load_main_agent_records(path)
+        verifier_failures = {
+            record.record_id: main.main_verifier_issues(record.target_response, record.verifier)
+            for record in v9_records
+            if main.main_verifier_issues(record.target_response, record.verifier)
+        }
+
+        self.assertEqual(v9_clean.errors, [])
+        self.assertEqual(v9_clean.total, 24)
+        self.assertEqual(v9_clean.verifier_records, 24)
+        self.assertEqual(v9_clean.categories["v9_clean_math"], 4)
+        self.assertEqual(v9_clean.categories["v9_clean_code_repair"], 5)
+        self.assertEqual(v9_clean.categories["v9_clean_format_constraints"], 5)
+        self.assertEqual(v9_clean.categories["v9_clean_planning"], 5)
+        self.assertEqual(v9_clean.categories["v9_clean_safe_near_boundary"], 5)
+        self.assertEqual(verifier_failures, {})
+        self.assertFalse(any(record.prompt in known_prompts for record in v9_records))
 
     def test_main_agent_latent_probe_seed_corpus_is_valid_and_separate(self):
         path = main.PROJECT_ROOT / "data" / "main_agent_latent_probe_seed.jsonl"

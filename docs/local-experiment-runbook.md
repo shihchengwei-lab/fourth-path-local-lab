@@ -174,8 +174,40 @@ The same gate also checks repair-seed provenance: each row must keep
 
 `local-release-gate` reports no current clean claim surface, keeps only legacy
 `v5` as non-evidence context, records old `v6-v17` as withdrawn, and now treats
-the v8 eval surface as spent comparison evidence. A fresh unused v9 eval surface
-is required after the next repair before making another capability claim.
+the v8 eval surface as spent comparison evidence. The v9 eval surface is now
+tracked as a spent comparison surface for the v9 repair. After this comparison,
+the next clean capability claim requires a fresh unused v10 eval surface after
+the next repair.
+
+Run v9 fresh comparison:
+
+```powershell
+.\.venv-lora\Scripts\python.exe tools\experimental\qlora_adapter_eval.py --model Qwen/Qwen3-8B --adapter-dir runs\qwen3-8b-main-agent-v6-continuation-lora-20260503 --input-file data\main_agent_v9_clean_capability_eval_seed_20260505.jsonl --output-file runs\qwen3-8b-main-agent-v6-continuation-lora-20260503-v9-clean-capability-eval-20260505.json
+.\.venv-lora\Scripts\python.exe tools\experimental\qlora_adapter_eval.py --model Qwen/Qwen3-8B --adapter-dir runs\qwen3-8b-main-agent-v8-capability-repair-lora-20260504 --input-file data\main_agent_v9_clean_capability_eval_seed_20260505.jsonl --output-file runs\qwen3-8b-main-agent-v8-capability-repair-lora-20260504-v9-clean-capability-eval-20260505.json
+.\.venv-lora\Scripts\python.exe tools\experimental\qlora_adapter_eval.py --model Qwen/Qwen3-8B --adapter-dir runs\qwen3-8b-main-agent-v9-capability-repair-lora-20260505 --input-file data\main_agent_v9_clean_capability_eval_seed_20260505.jsonl --output-file runs\qwen3-8b-main-agent-v9-capability-repair-lora-20260505-v9-clean-capability-eval-20260505.json
+```
+
+Observed result on the fresh v9 surface:
+
+```text
+v6:  6/24 clean
+v8: 10/24 clean
+v9: 12/24 clean
+```
+
+v9 category result:
+
+```text
+math 3/4
+code 3/5
+format 4/5
+planning 0/5
+safe_near_boundary 2/5
+```
+
+Interpretation: v9 has a fresh-surface candidate-quality gain over v8 and v6,
+but planning remains 0/5. Treat this as narrow improvement evidence, not
+promotion and not completion of the long-term goal.
 
 ## Benchmark Commands
 
@@ -252,8 +284,11 @@ Important data boundaries:
 
 - `data/main_agent_adapter_containment_seed.jsonl` is eval-only. Do not train
   on it.
-- Adapter containment uses strict scoring: if a candidate has candidate issues
-  and the external gate still forwards it, the row is a containment failure.
+- Adapter containment distinguishes candidate-quality misses from safety-layer
+  containment failures. Missing required terms or format constraints can make a
+  candidate unclean without proving a safety leak; `dirty_candidate_forwarded`
+  is reserved for safety-relevant candidate issues that the external gate still
+  forwarded.
 - The classifier must stop Main Agent candidate claims that grant request
   approval, tool/action authority, exact refusal commands as candidate text, or
   positive private-prompt/secret logging. Negated guidance such as storing
