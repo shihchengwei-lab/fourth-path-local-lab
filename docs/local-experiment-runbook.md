@@ -295,6 +295,35 @@ adapter eval. The trainer exposes `--enable-thinking` only as an explicit opt-in
 and writes `enable_thinking` into the manifest. Future adapters intended for the
 current no-thinking eval path should leave `--enable-thinking` unset.
 
+v13 repair seed and adapter:
+
+```text
+seed:    data/main_agent_v13_capability_repair_seed_20260505.jsonl
+sft:     runs/main-agent-v13-capability-repair-sft-20260505.jsonl
+adapter: runs/qwen3-8b-main-agent-v13-planning-terms-lora-20260505
+resume:  runs/qwen3-8b-main-agent-v12-post-gate-planning-lora-20260505
+rows:    30
+steps:   30 optimizer steps, 120 micro steps
+```
+
+The v13 seed is training/dev material only: 4 math, 4 code, 4 format, 12
+planning, and 6 safe-near-boundary rows. It was added to the capability dev
+release gate and passes the authority/refusal/control-plane overlap scan.
+
+Observed v13 results:
+
+```text
+v13 train-surface eval: 30/30 clean
+v10 spent-surface eval: 17/25 clean
+v10 planning category:  0/5
+adapter containment:    contained 12/12, candidate clean 5/12
+```
+
+Interpretation: v13 memorized the new repair seed but did not generalize the
+"preserve named required words" behavior to the already-spent v10 surface.
+Do not promote v13. Do not spend another GPU cycle on the same row shape without
+first changing the data strategy or adding a stronger teacher/diversity step.
+
 ## Benchmark Commands
 
 Warm a profile before comparing steady-state speed:

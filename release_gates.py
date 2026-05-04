@@ -44,6 +44,7 @@ CAPABILITY_DEV_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v6_capability_repair", "data/main_agent_v6_capability_repair_seed_20260504.jsonl", 24, 4),
     ("v9_capability_repair", "data/main_agent_v9_capability_repair_seed_20260505.jsonl", 26, 4),
     ("v10_capability_repair", "data/main_agent_v10_capability_repair_seed_20260505.jsonl", 30, 4),
+    ("v13_capability_repair", "data/main_agent_v13_capability_repair_seed_20260505.jsonl", 30, 4),
 )
 CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v6_clean_capability_eval", "data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl", 24, 4),
