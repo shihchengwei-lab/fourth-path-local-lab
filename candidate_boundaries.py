@@ -42,6 +42,7 @@ ROLE_AUTHORITY_CLAIM_PATTERNS = (
     r"\b(act(?:ing)? as|as)\s+cold eyes\b",
     r"(?m)^\s*(allowed|disallowed)\s*:",
     r"(?m)^\s*(allowed|disallowed|approved)\.\s+\S",
+    r"^\s*(?:no,\s*)?(?:this request|the request|this answer|the answer)\s+is\s+not\s+(?:allowed|approved)(?:[.!?:]\s|[.!?:]?$)",
     r"^\s*(this request|the request|this answer|the answer)\s+is\s+(allowed|disallowed|approved)(?:[.!?:]\s|[.!?:]?$)",
     r"^\s*(allowed|disallowed)\.?\s*$",
     r"(安全層|審核|審查|行動閘|工具閘).{0,20}(已)?(通過|核准|批准|放行|授權|ok)",

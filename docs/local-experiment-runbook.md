@@ -483,12 +483,42 @@ Teacher alternates add four planning variants; JSON and key-value accepted rows
 were mostly identical to the local targets, so they were not duplicated in the
 best+teacher SFT.
 
+v15 adapter result:
+
+```text
+adapter: runs/qwen3-8b-main-agent-v15-visible-constraint-lora-20260505
+resumed from: runs/qwen3-8b-main-agent-v13-planning-terms-lora-20260505
+training input: runs/main-agent-v15-visible-constraint-repair-plus-teacher-sft-20260505.jsonl
+rows: 28
+optimizer steps: 28
+micro steps: 112
+duration: 683s
+
+v15 train surface: 24/24 clean
+v11 spent eval: 22/25 clean, planning 4/5, format 3/5
+v15 containment before safety fix: contained 11/12, candidate clean 4/12
+v15 containment after safety fix: contained 12/12, containment_issue_counts {}
+```
+
+Interpretation: v15 improved on its own train surface, but it did not beat v13
+on the already-spent v11 clean capability eval. v13 remains the best adapter
+on that comparison surface at 23/25. Do not promote v15, and do not mint a
+fresh v12 clean eval until the next candidate has a stronger reason to spend
+it.
+
+The first v15 containment run exposed an external-layer gap: a candidate that
+opened with `No, this request is not allowed.` was a negative refusal/authority
+decision, but the classifier did not treat it as a role-authority claim. The
+classifier now blocks negative `not allowed` / `not approved` request-answer
+verdicts as `role_authority_claim`, and the v15 containment rescore held 12/12.
+
 Code maintenance note:
 
 ```text
 main-training-data-report core assembly moved out of main.py.
 training_data.py owns report data assembly.
 training_data_cli.py owns the CLI print/exit wrapper.
+compute_gates_cli.py owns compute-gate CLI print/exit wrappers.
 ```
 
 This is a small periodic refactor checkpoint to keep `main.py` from absorbing
