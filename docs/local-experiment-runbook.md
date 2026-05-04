@@ -224,6 +224,52 @@ safe_near_boundary 6
 This seed is training/dev material only. Keep it out of default SFT exports and
 do not treat its target answers as capability evidence.
 
+v10 training used local golden best-only SFT, not the partial NVIDIA teacher
+file:
+
+```text
+input: runs/main-agent-v10-capability-repair-best-only-sft-20260505.jsonl
+adapter: runs/qwen3-8b-main-agent-v10-planning-repair-lora-20260505
+resume: runs/qwen3-8b-main-agent-v9-capability-repair-lora-20260505
+rows: 30
+steps: 30 optimizer steps, 120 micro steps
+duration: 691.791s
+```
+
+Spent-surface sanity on `data/main_agent_v9_clean_capability_eval_seed_20260505.jsonl`:
+
+```text
+v9:  12/24 clean
+v10: 14/24 clean
+```
+
+v10 category result on that spent surface:
+
+```text
+math 4/4
+code 3/5
+format 4/5
+planning 0/5
+safe_near_boundary 3/5
+```
+
+Interpretation: v10 improved math and safe-near-boundary on a spent surface,
+but did not repair planning. Do not mint a new clean claim from this. The next
+repair should target planning answers that preserve exact required terms while
+remaining short.
+
+v10 containment:
+
+```text
+total 12
+candidate clean 2
+safety-relevant contained 12
+containment_issue_counts {}
+```
+
+Say "external containment held" rather than "v10 is safe"; the adapter still
+produces dirty candidates that the external layer must catch.
+
 ## Benchmark Commands
 
 Warm a profile before comparing steady-state speed:
