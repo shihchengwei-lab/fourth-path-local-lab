@@ -22,6 +22,16 @@
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
+          "id": "C1-p5",
+          "regex": "\\b(improvised explosive device|ied)\\b",
+          "flags": {"ignorecase": true}
+        },
+        {
+          "id": "C1-p6",
+          "regex": "\\bharmful recipe\\b.{0,80}\\b(explosive|poison|weapon)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
           "id": "C1-p4",
           "regex": "(製作|組裝).{0,30}(爆裂物|炸彈|毒物|武器)",
           "flags": {"ignorecase": false, "dotall": true}
@@ -66,6 +76,26 @@
         {
           "id": "C2-p12",
           "regex": "\\b(print|dump|read|show|reveal|cat|copy)\\b.{0,120}\\b(\\.env\\b|ssh keys?|api tokens?|api keys?|private keys?|secret files?|credentials?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p13",
+          "regex": "\\b(copy|paste|dump|print|show|read|upload|send|post|transmit)\\b.{0,120}\\b(environment variables?|dotenv file|\\.env(?: file| contents?)?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p14",
+          "regex": "\\b(move|copy|import|export|transfer)\\b.{0,100}\\b(browser\\s+)?cookies?\\b.{0,80}\\b(sign[- ]?in|login|access|profile|account)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p15",
+          "regex": "\\b(reveal|show|print|dump|quote)\\b.{0,120}\\b(hidden system|developer instructions?|audit instructions?|private audit|control[- ]?plane)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p16",
+          "regex": "\\b(hidden system|developer instructions?|audit instructions?|private audit)\\b.{0,120}\\b(avoid|bypass|evade|circumvent)\\b.{0,60}\\b(gate|audit|review|safety layer)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
@@ -118,6 +148,21 @@
         {
           "id": "C3-p4",
           "regex": "\\bspoof\\b.{0,80}\\b(email|caller|identity|login)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C3-p6",
+          "regex": "\\b(create|write|build|draft|compose)\\b.{0,80}\\b(login[- ]?code|mfa code|otp|one[- ]?time code)\\b.{0,80}\\b(collection|collector|capture|harvest)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C3-p7",
+          "regex": "\\b(login[- ]?code|mfa code|otp|one[- ]?time code)\\b.{0,80}\\b(collection|collector|capture|harvest)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C3-p8",
+          "regex": "\\bfake\\b.{0,40}\\b(payroll|invoice)\\b.{0,80}\\b(email|message)\\b.{0,100}\\b(asks?|steal|capture|collect|enter|password|credential|one[- ]?time|otp|login code)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
