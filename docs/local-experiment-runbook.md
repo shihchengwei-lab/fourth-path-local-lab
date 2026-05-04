@@ -186,16 +186,18 @@ data-boundary correction. Release gate now includes a boundary-clean check for
 that file, so future claim surfaces should follow that shape rather than the
 older spent v6/v8/v9 evals that included external safety-layer terms.
 
-Fresh v10 comparison:
+Fresh v10 comparison after correcting the code verifier:
 
 ```text
-v9:  13/25 clean
-v10: 12/25 clean
-v12: 12/25 clean
+v9:  16/25 clean
+v10: 16/25 clean
+v12: 17/25 clean
 ```
 
-Result: v12 is not a promotion candidate. Planning stayed 0/5, and the new
-surface is now spent.
+The v10 code rows now verify the required function signature plus Python tests,
+instead of rewarding one exact implementation shape. Result: v12 is not a
+promotion candidate yet. It is +1 over v9/v10 on this spent surface, but
+planning stayed 0/5 and the new surface is now spent.
 
 Run v9 fresh comparison:
 

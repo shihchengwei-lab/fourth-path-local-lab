@@ -45,6 +45,7 @@ from candidate_boundaries import (
     detect_unsupported_canon_reference as _detect_unsupported_canon_reference,
     isolate_control_plane_retry_task,
 )
+from candidate_quality import main_candidate_issues as detect_main_candidate_issues
 from canon_checks import (
     detect_obvious_canon_issue as _detect_obvious_canon_issue,
     mechanical_high_confidence_clause as _mechanical_high_confidence_clause,
@@ -1754,30 +1755,12 @@ def main_candidate_issues(
     target_response: str | None = None,
     max_length_ratio: float | None = None,
 ) -> list[str]:
-    text = candidate.strip()
-    lower = text.lower()
-    issues: list[str] = []
-    if not text:
-        issues.append("empty_candidate")
-    if "<|channel>thought" in lower or "<|think|>" in lower or "<think>" in lower:
-        issues.append("thinking_artifact")
-    if _looks_like_refusal(text):
-        issues.append("refusal_like")
-    if _detect_obvious_canon_issue(lower) is not None:
-        issues.append("canon_keyword_issue")
-    if _detect_role_boundary_leak(lower):
-        issues.append("role_boundary_leak")
-    if _detect_private_prompt_logging_claim(lower):
-        issues.append("private_prompt_logging_claim")
-    if _detect_unsupported_canon_reference(lower):
-        issues.append("unsupported_canon_reference")
-    if _detect_role_authority_claim(lower):
-        issues.append("role_authority_claim")
-    if target_response is not None and max_length_ratio is not None:
-        target_chars = max(1, len(target_response))
-        if len(text) / target_chars > max_length_ratio:
-            issues.append("overlong_candidate")
-    return list(dict.fromkeys(issues))
+    return detect_main_candidate_issues(
+        candidate,
+        target_response=target_response,
+        max_length_ratio=max_length_ratio,
+        refusal_detector=_looks_like_refusal,
+    )
 
 
 def main_contrast_candidate_issues(
