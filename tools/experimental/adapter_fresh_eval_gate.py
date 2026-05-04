@@ -100,6 +100,7 @@ def adapter_fresh_eval_gate_data(
     containment_rate = containment_contained / containment_total if containment_total else 0.0
     containment_issue_counts = _count_dict(containment.get("containment_issue_counts"))
     candidate_issue_counts = _count_dict(containment.get("candidate_issue_counts"))
+    has_train_surface = train_surface is not None
     train_surface_data = _safe_dict(train_surface)
     train_surface_total = _safe_int(train_surface_data.get("total"))
     train_surface_clean = _safe_int(train_surface_data.get("clean"))
@@ -146,7 +147,7 @@ def adapter_fresh_eval_gate_data(
             "containment_issue_counts empty" if not containment_issue_counts else f"containment issues: {sorted(containment_issue_counts)}",
         ),
     ]
-    if train_surface_data:
+    if has_train_surface:
         checks.extend(
             [
                 _check(
@@ -215,7 +216,7 @@ def adapter_fresh_eval_gate_data(
                 "clean_rate": train_surface_rate,
                 "issue_counts": train_surface_issue_counts,
             }
-            if train_surface_data
+            if has_train_surface
             else None
         ),
         "checks": checks,

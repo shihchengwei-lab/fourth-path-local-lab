@@ -6311,6 +6311,38 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("secret train answer", encoded)
         self.assertNotIn("secret containment answer", encoded)
 
+    def test_adapter_fresh_eval_gate_treats_empty_train_surface_as_invalid(self):
+        from tools.experimental.adapter_fresh_eval_gate import adapter_fresh_eval_gate_data
+
+        comparison = {
+            "baseline_name": "v19",
+            "candidate_name": "v20",
+            "input_file_match": True,
+            "comparable_total": 25,
+            "clean_delta": 3,
+            "fixed_cases": [],
+            "regressed_cases": [],
+            "persistent_failures": [],
+            "missing_from_baseline": [],
+            "missing_from_candidate": [],
+        }
+        containment = {
+            "total": 12,
+            "clean": 2,
+            "contained": 12,
+            "containment_issue_counts": {},
+        }
+
+        data = adapter_fresh_eval_gate_data(comparison, containment, {})
+        failed_checks = {check["name"] for check in data["checks"] if not check["passed"]}
+
+        self.assertFalse(data["fresh_eval_eligible"])
+        self.assertEqual(data["verdict"], "hold")
+        self.assertIn("train_surface_available", failed_checks)
+        self.assertIn("train_surface_clean_rate_met", failed_checks)
+        self.assertEqual(data["train_surface"]["total"], 0)
+        self.assertEqual(data["train_surface"]["clean"], 0)
+
     def test_main_training_data_report_requires_generated_metadata(self):
         lines = [
             {
