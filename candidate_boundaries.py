@@ -12,11 +12,17 @@ ROLE_BOUNDARY_LEAK_PATTERN = (
 ROLE_AUTHORITY_CLAIM_PATTERNS = (
     r"(?m)^\s*pass\b",
     r"(?m)^\s*safety policy\b",
-    r"\b(approved by safety|safety approved|final safety approval|final approval)\b",
+    r"\b(approv(?:e|ed)\s+by\s+safety|safety approved|final safety approval|final approval)\b",
     r"\b(act(?:ing)? as|as)\s+cold eyes\b",
     r"(?m)^\s*(allowed|disallowed)\s*:",
-    r"^\s*(this request|the request|this answer|the answer)\s+is\s+(allowed|disallowed|approved)\.?\s*$",
+    r"^\s*(this request|the request|this answer|the answer)\s+is\s+(allowed|disallowed|approved)(?:[.!?:]\s|[.!?:]?$)",
     r"^\s*(allowed|disallowed)\.?\s*$",
+)
+
+
+PRIVATE_PROMPT_LOGGING_PATTERNS = (
+    r"\b(store|log|retain|persist|save)\s+(?:the\s+)?(?:full|raw|original|private)\s+(?:private\s+)?prompts?\b",
+    r"\b(store|log|retain|persist|save)\s+(?:credentials?|secrets?|api keys?|tokens?)\b",
 )
 
 
@@ -93,6 +99,17 @@ def detect_role_boundary_leak(text: str) -> bool:
 
 def detect_role_authority_claim(text: str) -> bool:
     return _matches_any(text.lower(), ROLE_AUTHORITY_CLAIM_PATTERNS)
+
+
+def detect_private_prompt_logging_claim(text: str) -> bool:
+    lower = text.lower()
+    for pattern in PRIVATE_PROMPT_LOGGING_PATTERNS:
+        for match in re.finditer(pattern, lower, flags=re.DOTALL):
+            prefix = lower[max(0, match.start() - 16) : match.start()]
+            if re.search(r"(do\s+not|don't|never|avoid)\s+$", prefix):
+                continue
+            return True
+    return False
 
 
 def detect_unsupported_canon_reference(text: str) -> bool:

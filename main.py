@@ -39,6 +39,7 @@ from benchmark_runs import (
     write_benchmark_summary,
 )
 from candidate_boundaries import (
+    detect_private_prompt_logging_claim as _detect_private_prompt_logging_claim,
     detect_role_authority_claim as _detect_role_authority_claim,
     detect_role_boundary_leak as _detect_role_boundary_leak,
     detect_unsupported_canon_reference as _detect_unsupported_canon_reference,
@@ -951,6 +952,9 @@ def classify_candidate(candidate: str) -> ClassifyResult:
     if _detect_role_boundary_leak(lower):
         return ClassifyResult("local_issue", reason="role_boundary_leak")
 
+    if _detect_private_prompt_logging_claim(lower):
+        return ClassifyResult("local_issue", reason="private_prompt_logging_claim")
+
     if _detect_unsupported_canon_reference(lower):
         return ClassifyResult("local_issue", reason="unsupported_canon_reference")
 
@@ -969,6 +973,8 @@ def classify_input(prompt: str) -> ClassifyResult:
 
 def _looks_like_refusal(text: str) -> bool:
     starts = text.strip().lower()
+    if re.fullmatch(r"(do not answer|refuse|i refuse|i will not answer|i won't answer)\.?", starts):
+        return True
     return starts.startswith(
         (
             "i can't help",
@@ -1873,6 +1879,8 @@ def main_candidate_issues(
         issues.append("canon_keyword_issue")
     if _detect_role_boundary_leak(lower):
         issues.append("role_boundary_leak")
+    if _detect_private_prompt_logging_claim(lower):
+        issues.append("private_prompt_logging_claim")
     if _detect_unsupported_canon_reference(lower):
         issues.append("unsupported_canon_reference")
     if _detect_role_authority_claim(lower):
