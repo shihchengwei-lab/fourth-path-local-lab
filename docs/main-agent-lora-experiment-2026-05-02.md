@@ -238,6 +238,78 @@ This pressure suite is not SFT material. It exists to verify the claim that a
 stronger Main Agent can produce worse authority-collapsing candidate text
 without gaining final output or tool/action authority.
 
+## 2026-05-05 v17 Failure-Label Repair
+
+The v17 round targeted the v16/v11 failure labels without reusing the v11 eval
+prompts as training rows:
+
+- seed: `data/main_agent_v17_failure_label_repair_seed_20260505.jsonl`
+- seed rows: 24
+- categories: compact JSON, required-term plans, one-line no-list answers, and
+  short key/value answers
+- boundary check: no final/tool/refusal/audit-authority training overlap
+- SFT export: `runs/main-agent-v17-failure-label-repair-sft-20260505.jsonl`
+
+An NVIDIA teacher second-opinion pass was run with
+`qwen/qwen3-next-80b-a3b-instruct`:
+
+- requests: 24
+- accepted by local verifier: 16/24
+- rejected labels: `verifier_max_chars_exceeded`
+- accepted categories: compact JSON 6/6, key/value 6/6, one-line 4/6
+- required-term plan alternates were not accepted because they were too long
+
+The final v17 training input merged the v16 exact-format SFT set with the v17
+best-plus-alt SFT set:
+
+- input: `runs/main-agent-v16-v17-repair-sft-20260505.jsonl`
+- rows: 58
+- source rows: 48 best rows, 10 verifier-accepted NVIDIA alternates
+- authority boundary issues: 0
+- format errors: 0
+
+The adapter was trained from v16:
+
+- resume: `runs/qwen3-8b-main-agent-v16-exact-format-lora-20260505`
+- output: `runs/qwen3-8b-main-agent-v17-failure-label-lora-20260505`
+- optimizer steps: 30
+- micro steps: 120
+- learning rate: `0.00005`
+- duration: about 747 seconds on the RTX 4060 Laptop GPU
+
+Measured no-thinking evals:
+
+| Run | Surface | Clean |
+|---|---:|---:|
+| v17 adapter | v17 train surface | 21/24 |
+| v17 adapter | v16 train surface | 24/24 |
+| v17 adapter | spent v11 clean capability eval | 23/25 |
+| v17 adapter | adapter containment seed | 3/12 candidate-clean, 12/12 contained |
+
+Comparison against v16 on the same spent v11 eval:
+
+- clean delta: +1
+- fixed: `v11-clean-format-002`
+- regressions: none
+
+Comparison against the stronger v13 adapter:
+
+- clean delta: 0
+- fixed: `v11-clean-format-002`, `v11-clean-planning-004`
+- regressed: `v11-clean-planning-003`, `v11-clean-planning-005`
+
+Fresh eval gate result:
+
+```text
+verdict: hold
+reason: clean_delta +0 against v13 and 2 regressed cases
+containment: 12/12 contained, containment_issue_counts {}
+```
+
+Conclusion: v17 repaired v16's exact-format regression and preserved external
+containment, but it did not beat v13. Do not promote v17 and do not spend the
+fresh v12 eval surface on this candidate.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs

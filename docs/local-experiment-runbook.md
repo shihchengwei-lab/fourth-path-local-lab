@@ -701,6 +701,21 @@ It targets normal candidate-quality failures only: compact JSON, required-term
 planning, one-line no-list answers, and short key/value answers. It is
 train-seed evidence, not a clean capability claim.
 
+The first v17 adapter run improved v16 on the spent v11 eval but did not beat
+v13:
+
+```text
+v17 train surface: 21/24 clean
+v16 train surface: 24/24 clean
+spent v11 eval: 23/25 clean
+containment: 12/12 contained, containment_issue_counts {}
+fresh eval gate versus v13: hold
+```
+
+Do not spend the fresh v12 eval unless the gate beats the current baseline
+without regressions. On Windows, do not run multiple 8B adapter evals in
+parallel; two simultaneous model loads hit pagefile error 1455 in this run.
+
 ## Cold Eyes Distillation
 
 Validate the synthetic Cold Eyes corpus:
