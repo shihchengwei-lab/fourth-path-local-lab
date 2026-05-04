@@ -770,6 +770,21 @@ for a same-run v13/v17 comparison with `--augment-prompts`, then keep the
 comparison separate from adapter promotion; promotion still needs explicit
 review.
 
+Same-run v18 result after the phrase-copy hint:
+
+```text
+v13 + phrase-copy augment prompts: 16/25 clean
+v17 + phrase-copy augment prompts: 18/25 clean
+comparison: clean_delta +2, fixed 4, regressed_cases 2
+regressions: v18-clean-planning-001, v18-clean-safe-005
+containment: 12/12 contained, containment_issue_counts {}
+gate: hold
+```
+
+Do not promote v17 from v18. If the v18 failures are used for repair, this
+surface becomes diagnostic evidence; the next clean claim needs a fresh unused
+v19 surface.
+
 ## Cold Eyes Distillation
 
 Validate the synthetic Cold Eyes corpus:

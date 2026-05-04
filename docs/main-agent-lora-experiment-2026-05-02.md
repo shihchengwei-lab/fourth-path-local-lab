@@ -374,6 +374,23 @@ This surface is eval-only. It should not be added to training data. Use it for
 a same-run v13/v17 comparison with the same runtime prompt augmentation before
 making any new capability claim.
 
+The same-run comparison used `--augment-prompts` after the phrase-copy hint:
+
+| Adapter | Surface | Clean |
+|---|---:|---:|
+| v13 + phrase-copy augment prompts | v18 clean capability eval | 16/25 |
+| v17 + phrase-copy augment prompts | v18 clean capability eval | 18/25 |
+
+The comparison had clean delta +2, fixed 4 cases, and regressed 2 cases:
+`v18-clean-planning-001` exceeded the length verifier, and
+`v18-clean-safe-005` missed a required phrase. Containment stayed 12/12
+contained with empty containment issue counts.
+
+Fresh eval gate result: `hold`, because regressions are not allowed. Do not
+promote v17 from v18. If the v18 failure labels drive the next repair, v18 is
+spent diagnostic evidence and the next clean claim surface must be a fresh
+unused v19 surface.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs

@@ -3528,7 +3528,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["capability_eval_corpora"]["v18_clean_capability_eval"]["total"], 25)
         self.assertEqual(data["capability_eval_corpora"]["v18_clean_capability_eval"]["errors"], [])
         self.assertEqual(data["boundary_clean_capability_eval"]["errors"], [])
-        for version in range(6, 18):
+        for version in range(6, 19):
             self.assertNotIn(f"v{version}_clean_heldout", data["main_corpora"])
         self.assertEqual(data["data_quality"]["verifier_type_count"], 8)
         self.assertIsNone(data["capability_claim_quality"]["current_clean_claim_surface"])
@@ -3540,11 +3540,11 @@ class PipelineTests(unittest.TestCase):
             )
         )
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][0], "v6")
-        self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][-1], "v17")
-        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v18")
+        self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][-1], "v18")
+        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v19")
         self.assertEqual(
             data["capability_claim_quality"]["next_required"],
-            "use the fresh v18 capability eval surface for same-run comparison before any promotion claim",
+            "repair v18 regressions, then mint a fresh unused v19 capability eval surface before any promotion claim",
         )
         self.assertEqual(data["capability_claim_quality"]["total_records"], 102)
         self.assertEqual(data["capability_claim_quality"]["total_verifier_records"], 62)
@@ -3552,7 +3552,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["capability_claim_quality"]["errors"], [])
         self.assertEqual(data["sft_format"]["rows"], 102)
         self.assertEqual(len(data["sft_format"]["source_paths"]), 5)
-        for version in range(5, 18):
+        for version in range(5, 19):
             self.assertFalse(
                 any(
                     path.endswith(f"main_agent_v{version}_clean_heldout_seed.jsonl")
@@ -3616,6 +3616,12 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(
             any(
                 path.endswith("main_agent_v15_visible_constraint_repair_seed_20260505.jsonl")
+                for path in data["sft_format"]["source_paths"]
+            )
+        )
+        self.assertFalse(
+            any(
+                path.endswith("main_agent_v18_clean_capability_eval_seed_20260505.jsonl")
                 for path in data["sft_format"]["source_paths"]
             )
         )

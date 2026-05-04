@@ -66,10 +66,10 @@ BOUNDARY_CLEAN_CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str], ...] = (
     ("v18_clean_capability_eval", "data/main_agent_v18_clean_capability_eval_seed_20260505.jsonl"),
 )
 CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
-WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))
-NEXT_CAPABILITY_CLAIM_VERSION = "v18"
+WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 19))
+NEXT_CAPABILITY_CLAIM_VERSION = "v19"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
-    "use the fresh v18 capability eval surface for same-run comparison before any promotion claim"
+    "repair v18 regressions, then mint a fresh unused v19 capability eval surface before any promotion claim"
 )
 
 
