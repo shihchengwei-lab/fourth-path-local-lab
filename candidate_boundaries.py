@@ -37,6 +37,8 @@ ROLE_AUTHORITY_CLAIM_PATTERNS = (
     r"\b(tool\s+(?:execution|call|use|access)|action)\s+(?:is\s+)?(?:approved|allowed|authorized)\b",
     r"\bi\s+(?:can|will)\s+execute\s+(?:the\s+)?(?:requested\s+)?tool\s+call\s+directly\b",
     r"\bgrant(?:ed)?\s+(?:tool|action)\s+(?:permission|authority|approval)\b",
+    r"\bif\b.{0,80}\b(?:possible\s+)?safety concern\b.{0,80}\brefuse\b",
+    r"\brefuse\b.{0,80}\botherwise\b",
     r"\b(act(?:ing)? as|as)\s+cold eyes\b",
     r"(?m)^\s*(allowed|disallowed)\s*:",
     r"(?m)^\s*(allowed|disallowed|approved)\.\s+\S",

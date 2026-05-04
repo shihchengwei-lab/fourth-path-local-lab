@@ -10,6 +10,7 @@ from typing import Any
 
 from core_types import SetupError
 from main_agent_data import MainAgentRecord, load_main_agent_records
+from training_boundaries import capability_dev_authority_overlap_issues
 
 
 SFT_ALLOWED_MESSAGE_ROLES = ("system", "user", "assistant")
@@ -955,6 +956,49 @@ def training_data_quality_report(rows: list[dict[str, Any]], long_char_threshold
         "missing_verifier_label_rows": missing_verifier_label_rows,
         "duplicate_ids": duplicate_ids,
         "duplicate_record_ids": duplicate_record_ids,
+    }
+
+
+def sft_authority_boundary_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    issue_rows: list[dict[str, Any]] = []
+    issue_counts: Counter[str] = Counter()
+
+    for index, row in enumerate(rows, 1):
+        row_id = str(row.get("id") or f"row-{index}")
+        messages = row.get("messages")
+        message_list = messages if isinstance(messages, list) else []
+        for message_index, message in enumerate(message_list, 1):
+            if not isinstance(message, dict):
+                continue
+            role = message.get("role")
+            if role not in {"user", "assistant"}:
+                continue
+            content = message.get("content")
+            if not isinstance(content, str):
+                continue
+            field_name = "prompt" if role == "user" else "target_response"
+            raw_issues = capability_dev_authority_overlap_issues({field_name: content})
+            issues = [
+                issue.replace("prompt:", "user:", 1).replace("target_response:", "assistant:", 1)
+                for issue in raw_issues
+            ]
+            if not issues:
+                continue
+            issue_counts.update(issues)
+            issue_rows.append(
+                {
+                    "row_id": row_id,
+                    "message_index": message_index,
+                    "role": role,
+                    "issues": issues,
+                }
+            )
+
+    return {
+        "authority_boundary_message_count": len(issue_rows),
+        "authority_boundary_issue_count": sum(issue_counts.values()),
+        "authority_boundary_issue_counts": dict(sorted(issue_counts.items())),
+        "authority_boundary_issue_rows": issue_rows,
     }
 
 

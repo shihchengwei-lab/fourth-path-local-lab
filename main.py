@@ -169,7 +169,6 @@ from release_gates import (
     LocalReleaseGateConfig,
     architecture_check_data as release_architecture_check_data,
     architecture_check_items as release_architecture_check_items,
-    capability_dev_authority_overlap_issues,
     local_release_gate_data as release_local_release_gate_data,
     render_architecture_check,
     render_local_release_gate,
@@ -197,6 +196,7 @@ from training_data import (
     run_main_limo_curate,
     run_main_mix_distill_curate,
     sft_export_format_gate_data as sft_export_format_gate_data_core,
+    sft_authority_boundary_report,
     training_data_quality_errors,
     training_data_quality_report,
     training_row_assistant_text,
@@ -2506,49 +2506,6 @@ def main_mix_distill_curate_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def main_sft_authority_boundary_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    issue_rows: list[dict[str, Any]] = []
-    issue_counts: Counter[str] = Counter()
-
-    for index, row in enumerate(rows, 1):
-        row_id = str(row.get("id") or f"row-{index}")
-        messages = row.get("messages")
-        message_list = messages if isinstance(messages, list) else []
-        for message_index, message in enumerate(message_list, 1):
-            if not isinstance(message, dict):
-                continue
-            role = message.get("role")
-            if role not in {"user", "assistant"}:
-                continue
-            content = message.get("content")
-            if not isinstance(content, str):
-                continue
-            field_name = "prompt" if role == "user" else "target_response"
-            raw_issues = capability_dev_authority_overlap_issues({field_name: content})
-            issues = [
-                issue.replace("prompt:", "user:", 1).replace("target_response:", "assistant:", 1)
-                for issue in raw_issues
-            ]
-            if not issues:
-                continue
-            issue_counts.update(issues)
-            issue_rows.append(
-                {
-                    "row_id": row_id,
-                    "message_index": message_index,
-                    "role": role,
-                    "issues": issues,
-                }
-            )
-
-    return {
-        "authority_boundary_message_count": len(issue_rows),
-        "authority_boundary_issue_count": sum(issue_counts.values()),
-        "authority_boundary_issue_counts": dict(sorted(issue_counts.items())),
-        "authority_boundary_issue_rows": issue_rows,
-    }
-
-
 def main_training_data_report_command(args: argparse.Namespace) -> int:
     rows, errors, total = load_sft_jsonl_rows(Path(args.input_file))
     if errors:
@@ -2557,7 +2514,7 @@ def main_training_data_report_command(args: argparse.Namespace) -> int:
         return 1
 
     data = training_data_quality_report(rows, long_char_threshold=args.long_char_threshold)
-    data.update(main_sft_authority_boundary_report(rows))
+    data.update(sft_authority_boundary_report(rows))
     data["path"] = args.input_file
     data["require_system"] = args.require_system
     require_generated_metadata = getattr(args, "require_generated_metadata", False)
