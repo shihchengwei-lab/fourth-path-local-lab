@@ -349,6 +349,66 @@ local verifier constraints without exposing target answers. Four accepted rows
 from the same prompt set are not enough to justify another GPU training run;
 next work should diversify synthetic planning prompts first.
 
+v14 planning diversity seed:
+
+```text
+seed: data/main_agent_v14_planning_diversity_seed_20260505.jsonl
+sft:  runs/main-agent-v14-planning-diversity-sft-20260505.jsonl
+rows: 24
+categories:
+- v14_capability_planning_exact_terms: 8
+- v14_capability_planning_sequence: 6
+- v14_capability_planning_one_sentence: 5
+- v14_capability_planning_bullets: 5
+```
+
+The v14 seed is still training/dev material only. It is not capability evidence
+and all rows set `clean_claim_eligible=false`. The release gate caught one draft
+row that used `prompt hash` because it looked like a control-plane prompt
+reference; the row was rewritten to `row hash` before validation.
+
+v14 local SFT report:
+
+```text
+rows: 24
+system_rows: 24
+authority_boundary_issue_count: 0
+format_errors: []
+```
+
+v14 NVIDIA teacher pass with verifier-aware prompts:
+
+```text
+output: runs/main-agent-v14-planning-diversity-nvidia-teacher-20260505.jsonl
+model: qwen/qwen3-next-80b-a3b-instruct
+accepted: 11/24
+acceptance_rate: 45.8%
+accepted categories:
+- v14_capability_planning_exact_terms: 7
+- v14_capability_planning_sequence: 1
+- v14_capability_planning_one_sentence: 1
+- v14_capability_planning_bullets: 2
+authority_boundary_issue_count: 0
+format_errors: []
+```
+
+Interpretation: verifier-aware NVIDIA teacher output is now useful as a
+second-angle source, but v14 is not yet a promoted capability result. If the next
+GPU run uses it, treat the 24 local rows plus 11 accepted teacher rows as a
+training candidate set and evaluate on a fresh, unused capability surface before
+making any clean claim.
+
+Code maintenance note:
+
+```text
+main-training-data-report core assembly moved out of main.py.
+training_data.py owns report data assembly.
+training_data_cli.py owns the CLI print/exit wrapper.
+```
+
+This is a small periodic refactor checkpoint to keep `main.py` from absorbing
+every data-quality path.
+
 ## Benchmark Commands
 
 Warm a profile before comparing steady-state speed:

@@ -137,7 +137,6 @@ def render_main_sft_export(data: dict[str, Any]) -> str:
     lines.extend(f"- {category}: {count}" for category, count in data["categories"].items())
     return "\n".join(lines)
 
-
 def sft_export_format_gate_data(paths: Path | list[Path], system_prompt: str) -> dict[str, Any]:
     source_paths = [paths] if isinstance(paths, Path) else list(paths)
     all_rows: list[dict[str, Any]] = []
@@ -227,6 +226,13 @@ def load_sft_jsonl_rows(path: Path) -> tuple[list[dict[str, Any]], list[str], in
             continue
         rows.append(row)
     return rows, errors, total
+
+
+def load_sft_rows_or_raise(path: Path) -> list[dict[str, Any]]:
+    rows, errors, _ = load_sft_jsonl_rows(path)
+    if errors:
+        raise SetupError("; ".join(errors))
+    return rows
 
 
 def validate_sft_jsonl_row(row: dict[str, Any], line_number: int) -> list[str]:
@@ -1025,6 +1031,32 @@ def training_data_quality_errors(
                 f"missing verifier label metadata: {data['missing_verifier_label_rows']} row(s)"
             )
     return errors
+
+
+def training_data_report_data(
+    rows: list[dict[str, Any]],
+    *,
+    path: Path | str,
+    require_system: bool,
+    require_generated_metadata: bool,
+    long_char_threshold: int = 1200,
+) -> dict[str, Any]:
+    data = training_data_quality_report(rows, long_char_threshold=long_char_threshold)
+    data.update(sft_authority_boundary_report(rows))
+    data["path"] = str(path)
+    data["require_system"] = require_system
+    data["require_generated_metadata"] = require_generated_metadata
+    data["format_errors"] = training_data_quality_errors(
+        data,
+        require_system=require_system,
+        require_generated_metadata=require_generated_metadata,
+    )
+    if data["authority_boundary_message_count"]:
+        data["format_errors"].append(
+            "authority/refusal/control-plane SFT boundary issues: "
+            f"{data['authority_boundary_message_count']} message(s)"
+        )
+    return data
 
 
 def render_training_data_quality_report(data: dict[str, Any]) -> str:

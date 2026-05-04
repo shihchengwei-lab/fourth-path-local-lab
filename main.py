@@ -182,6 +182,7 @@ from training_data import (
     export_main_sft as export_main_sft_core,
     infer_main_sft_source_split,
     load_sft_jsonl_rows,
+    load_sft_rows_or_raise,
     limo_keyword_count,
     limo_template_features,
     limo_template_score,
@@ -193,16 +194,15 @@ from training_data import (
     render_main_limo_curate,
     render_main_mix_distill_curate,
     run_main_best_plus_alt_export,
-    render_training_data_quality_report,
     run_main_limo_curate,
     run_main_mix_distill_curate,
     sft_export_format_gate_data as sft_export_format_gate_data_core,
-    sft_authority_boundary_report,
     training_data_quality_errors,
     training_data_quality_report,
     training_row_assistant_text,
     verifier_metadata_labels,
 )
+from training_data_cli import main_training_data_report_command
 
 from audit.engine import run_audit
 
@@ -2488,40 +2488,6 @@ def main_mix_distill_curate_command(args: argparse.Namespace) -> int:
     )
     print_json_or_text(data, args.json, render_main_mix_distill_curate(data))
     return 0
-
-
-def main_training_data_report_command(args: argparse.Namespace) -> int:
-    rows, errors, total = load_sft_jsonl_rows(Path(args.input_file))
-    if errors:
-        data = {"path": args.input_file, "total": total, "errors": errors}
-        print_json_or_text(data, args.json, "\n".join(errors))
-        return 1
-
-    data = training_data_quality_report(rows, long_char_threshold=args.long_char_threshold)
-    data.update(sft_authority_boundary_report(rows))
-    data["path"] = args.input_file
-    data["require_system"] = args.require_system
-    require_generated_metadata = getattr(args, "require_generated_metadata", False)
-    data["require_generated_metadata"] = require_generated_metadata
-    data["format_errors"] = training_data_quality_errors(
-        data,
-        require_system=args.require_system,
-        require_generated_metadata=require_generated_metadata,
-    )
-    if data["authority_boundary_message_count"]:
-        data["format_errors"].append(
-            "authority/refusal/control-plane SFT boundary issues: "
-            f"{data['authority_boundary_message_count']} message(s)"
-        )
-    print_json_or_text(data, args.json, render_training_data_quality_report(data))
-    return 1 if data["format_errors"] else 0
-
-
-def load_sft_rows_or_raise(path: Path) -> list[dict[str, Any]]:
-    rows, errors, _ = load_sft_jsonl_rows(path)
-    if errors:
-        raise SetupError("; ".join(errors))
-    return rows
 
 
 def run_main_distill_pipeline(
