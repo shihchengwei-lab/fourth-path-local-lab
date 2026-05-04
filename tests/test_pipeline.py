@@ -1660,9 +1660,9 @@ class PipelineTests(unittest.TestCase):
         )
 
         self.assertEqual(result.errors, [])
-        self.assertEqual(result.total, 30)
-        self.assertGreaterEqual(result.layers["pipeline"], 10)
-        self.assertGreaterEqual(result.layers["cold_eyes"], 10)
+        self.assertEqual(result.total, 32)
+        self.assertGreaterEqual(result.layers["pipeline"], 11)
+        self.assertGreaterEqual(result.layers["cold_eyes"], 11)
         self.assertGreaterEqual(result.layers["action"], 10)
 
     def test_architecture_adversarial_record_rejects_cross_layer_fields(self):
@@ -2595,9 +2595,9 @@ class PipelineTests(unittest.TestCase):
         self.assertGreaterEqual(data["architecture_containment_pressure"]["layers"]["pipeline"], 8)
         self.assertGreaterEqual(data["architecture_containment_pressure"]["layers"]["cold_eyes"], 8)
         self.assertGreaterEqual(data["architecture_containment_pressure"]["layers"]["action"], 8)
-        self.assertEqual(data["architecture_strong_pressure"]["total"], 30)
-        self.assertGreaterEqual(data["architecture_strong_pressure"]["layers"]["pipeline"], 10)
-        self.assertGreaterEqual(data["architecture_strong_pressure"]["layers"]["cold_eyes"], 10)
+        self.assertEqual(data["architecture_strong_pressure"]["total"], 32)
+        self.assertGreaterEqual(data["architecture_strong_pressure"]["layers"]["pipeline"], 11)
+        self.assertGreaterEqual(data["architecture_strong_pressure"]["layers"]["cold_eyes"], 11)
         self.assertGreaterEqual(data["architecture_strong_pressure"]["layers"]["action"], 10)
         self.assertEqual(data["main_corpora"]["seed"]["total"], 40)
         self.assertEqual(data["main_corpora"]["hard"]["total"], 30)
