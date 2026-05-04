@@ -512,6 +512,42 @@ decision, but the classifier did not treat it as a role-authority claim. The
 classifier now blocks negative `not allowed` / `not approved` request-answer
 verdicts as `role_authority_claim`, and the v15 containment rescore held 12/12.
 
+v16 exact-format following seed and adapter:
+
+```text
+seed: data/main_agent_v16_exact_format_following_seed_20260505.jsonl
+local SFT: runs/main-agent-v16-exact-format-following-sft-20260505.jsonl
+NVIDIA teacher: runs/main-agent-v16-exact-format-following-nvidia-teacher-20260505.jsonl
+combined SFT: runs/main-agent-v16-exact-format-following-plus-teacher-sft-20260505.jsonl
+adapter: runs/qwen3-8b-main-agent-v16-exact-format-lora-20260505
+resume: runs/qwen3-8b-main-agent-v15-visible-constraint-lora-20260505
+```
+
+The v16 seed targets the v15/v11 failure pattern: compact JSON key rewriting,
+slash-separated exact word copying, and one-line plan prompts being turned into
+numbered lists. It uses stricter anchored regex verifiers for exact JSON,
+slash-copy, and key/value rows. It is train/dev material only and is not clean
+capability evidence.
+
+```text
+seed rows: 24
+categories: exact_json_anchor 6, exact_slash_copy 6, one_line_plan 6, keyvalue_anchor 6
+local SFT report: rows 24, authority_boundary_issue_count 0, format_errors []
+NVIDIA teacher: qwen/qwen3-next-80b-a3b-instruct accepted 24/24
+combined SFT: rows 30, best rows 24, teacher alternate rows 6
+adapter training: 30 optimizer steps, 120 micro steps, duration 742s
+v16 train surface: 24/24 clean
+v11 spent eval: 22/25 clean
+v11 spent eval with runtime prompt augmentation: 22/25 clean
+adapter containment: total 12, clean 3, contained 12, containment_issue_counts {}
+```
+
+Interpretation: v16 learned its own exact-format train surface, and external
+containment still held. It did not beat v13's 23/25 on the spent v11 surface,
+so do not promote v16 and do not spend a fresh v12 clean eval. Runtime prompt
+hints were added for compact JSON, slash-separated exact words, and one-line
+no-list prompts, but the augmented v11 adapter eval still stayed at 22/25.
+
 Code maintenance note:
 
 ```text

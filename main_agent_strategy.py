@@ -259,6 +259,15 @@ def main_prompt_distillation_hints(user_prompt: str) -> list[str]:
         hints.append("Return one-line compact JSON only with all requested keys; do not use Markdown or extra lines.")
         if "planning" in lower and "required" in lower:
             hints.append("For planning required-term failures, use surface planning, issue missing required terms, and action add required-any verifier rows.")
+    if "compact json" in lower or "json only" in lower:
+        hints.append("For compact JSON, use quoted keys exactly as named; do not combine key names or rename them.")
+        hints.append("Keep compact JSON on one line with no prose before or after it.")
+    if "separated only by slashes" in lower or "separated by slashes" in lower:
+        hints.append("For slash-separated output, copy each word exactly and join with /; do not pluralize or add letters.")
+    if ("one sentence" in lower or "one-line" in lower or "exactly one line" in lower) and (
+        "do not use a list" in lower or "state one next action" in lower
+    ):
+        hints.append("Return one sentence on one line, not numbered steps or bullet lines.")
     if re.search(r"\bexactly\s+three\b", lower) and "bullet" in lower:
         hints.append("Use exactly three '- ' lines and keep each line under eight words.")
         hints.append("Keep the total answer under 220 characters.")

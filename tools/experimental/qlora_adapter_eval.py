@@ -49,6 +49,7 @@ def run_eval(
     max_new_tokens: int | None = None,
     load_4bit: bool = True,
     enable_thinking: bool = False,
+    augment_prompts: bool = False,
 ) -> dict[str, Any]:
     records, errors, _ = main.load_main_agent_records(input_file)
     if errors:
@@ -78,9 +79,14 @@ def run_eval(
 
     results: list[dict[str, Any]] = []
     for record in records:
+        user_prompt = (
+            main.augment_main_user_prompt(record.prompt, record.prompt)
+            if augment_prompts
+            else record.prompt
+        )
         messages = [
             {"role": "system", "content": main.MAIN_AGENT_SYSTEM_PROMPT},
-            {"role": "user", "content": record.prompt},
+            {"role": "user", "content": user_prompt},
         ]
         prompt_text = chat_template_text(tokenizer, messages, enable_thinking=enable_thinking)
         inputs = tokenizer(prompt_text, return_tensors="pt").to(model.device)
@@ -110,6 +116,7 @@ def run_eval(
         "model": model_name,
         "adapter": str(adapter_dir) if adapter_dir else None,
         "enable_thinking": enable_thinking,
+        "augment_prompts": augment_prompts,
         "input_file": str(input_file),
         "total": len(results),
         "clean": sum(1 for result in results if result["clean"]),
@@ -136,6 +143,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--adapter-dir", default=None)
     parser.add_argument("--max-new-tokens", type=int, default=None)
     parser.add_argument("--enable-thinking", action="store_true")
+    parser.add_argument("--augment-prompts", action="store_true")
     parser.add_argument("--no-4bit", action="store_true")
     return parser.parse_args()
 
@@ -150,6 +158,7 @@ def main_cli() -> int:
         max_new_tokens=args.max_new_tokens,
         load_4bit=not args.no_4bit,
         enable_thinking=args.enable_thinking,
+        augment_prompts=args.augment_prompts,
     )
     print(
         json.dumps(

@@ -1226,6 +1226,19 @@ class PipelineTests(unittest.TestCase):
             "Explain.",
             "Give two defensive signs that a login alert email might be fake. Do not ask for credentials.",
         )
+        compact_json = main.augment_main_user_prompt(
+            "Answer.",
+            "Return compact JSON with phase done and next verify. No prose.",
+        )
+        slash_words = main.augment_main_user_prompt(
+            "Answer.",
+            "Return the four words alpha beta gamma note separated only by slashes.",
+        )
+        one_line_plan = main.augment_main_user_prompt(
+            "Answer.",
+            "State one next action in one sentence. Include failure labels, new training rows, "
+            "and fresh comparison set. Do not use a list.",
+        )
         self.assertIn("parameterized", sql)
         self.assertIn("bound parameter placeholder", sql)
         self.assertIn("candidate calls times per-candidate tokens", math)
@@ -1299,6 +1312,12 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("fresh held-out and public checks", fresh_lora)
         self.assertIn("review or audit recent activity", webhook)
         self.assertIn("sender/domain, link destination, urgency", login_alert)
+        self.assertIn("quoted keys exactly as named", compact_json)
+        self.assertIn("do not combine key names or rename them", compact_json)
+        self.assertIn("copy each word exactly and join with /", slash_words)
+        self.assertIn("do not pluralize or add letters", slash_words)
+        self.assertIn("one sentence on one line", one_line_plan)
+        self.assertIn("not numbered steps or bullet lines", one_line_plan)
         self.assertEqual(
             main.local_selection_unit_limit(
                 "Give two defensive signs that a login alert email might be fake. Do not ask for credentials."
@@ -3460,13 +3479,16 @@ class PipelineTests(unittest.TestCase):
             24,
         )
         self.assertEqual(data["capability_dev_corpora"]["v15_visible_constraint_repair"]["errors"], [])
-        self.assertEqual(data["capability_dev_provenance"]["total_records"], 168)
-        self.assertEqual(data["capability_dev_provenance"]["split_counts"], {"train_seed": 168})
+        self.assertEqual(data["capability_dev_corpora"]["v16_exact_format_following"]["total"], 24)
+        self.assertEqual(data["capability_dev_corpora"]["v16_exact_format_following"]["verifier_records"], 24)
+        self.assertEqual(data["capability_dev_corpora"]["v16_exact_format_following"]["errors"], [])
+        self.assertEqual(data["capability_dev_provenance"]["total_records"], 192)
+        self.assertEqual(data["capability_dev_provenance"]["split_counts"], {"train_seed": 192})
         self.assertEqual(
             data["capability_dev_provenance"]["evidence_level_counts"],
-            {"train_seed_not_capability_evidence": 168},
+            {"train_seed_not_capability_evidence": 192},
         )
-        self.assertEqual(data["capability_dev_provenance"]["clean_claim_eligible_counts"], {"false": 168})
+        self.assertEqual(data["capability_dev_provenance"]["clean_claim_eligible_counts"], {"false": 192})
         self.assertEqual(data["capability_dev_provenance"]["errors"], [])
         self.assertEqual(data["capability_eval_corpora"]["v6_clean_capability_eval"]["total"], 24)
         self.assertEqual(data["capability_eval_corpora"]["v8_clean_capability_eval"]["total"], 24)
@@ -4513,6 +4535,73 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(repair.categories["v15_capability_phrase_planning"], 8)
         self.assertEqual(repair.categories["v15_capability_literal_keyvalue"], 4)
         self.assertEqual(repair.categories["v15_capability_exact_bullets"], 4)
+        self.assertTrue(all(row["split"] == "train_seed" for row in rows))
+        self.assertTrue(all(row["evidence_level"] == "train_seed_not_capability_evidence" for row in rows))
+        self.assertTrue(all(row["clean_claim_eligible"] is False for row in rows))
+        self.assertEqual(verifier_failures, {})
+        self.assertEqual(boundary_failures, {})
+        self.assertFalse(any(record.prompt in known_prompts for record in repair_records))
+
+    def test_main_agent_v16_exact_format_following_seed_is_valid_separate_and_boundary_clean(self):
+        from training_boundaries import capability_dev_authority_overlap_issues
+
+        path = main.PROJECT_ROOT / "data" / "main_agent_v16_exact_format_following_seed_20260505.jsonl"
+        repair = main.check_main_agent_corpus(path)
+        source_paths = [
+            main.PROJECT_ROOT / "data" / "main_agent_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_hard_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_rotated_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_fresh_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_latent_probe_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_generalization_probe_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_generalization_driven_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v5_clean_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v6_clean_capability_eval_seed_20260504.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v6_capability_repair_seed_20260504.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v8_clean_capability_eval_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v9_capability_repair_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v9_clean_capability_eval_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v10_capability_repair_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v10_clean_capability_eval_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v11_clean_capability_eval_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v13_capability_repair_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v14_planning_diversity_seed_20260505.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v15_visible_constraint_repair_seed_20260505.jsonl",
+        ]
+        known_records = []
+        for source_path in source_paths:
+            records, _, _ = main.load_main_agent_records(source_path)
+            known_records.extend(records)
+        known_prompts = {record.prompt for record in known_records}
+        repair_records, _, _ = main.load_main_agent_records(path)
+        verifier_failures = {
+            record.record_id: main.main_verifier_issues(record.target_response, record.verifier)
+            for record in repair_records
+            if main.main_verifier_issues(record.target_response, record.verifier)
+        }
+        boundary_failures = {
+            record.record_id: capability_dev_authority_overlap_issues(
+                {"prompt": record.prompt, "target_response": record.target_response}
+            )
+            for record in repair_records
+            if capability_dev_authority_overlap_issues(
+                {"prompt": record.prompt, "target_response": record.target_response}
+            )
+        }
+        rows = [
+            json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+        self.assertEqual(repair.errors, [])
+        self.assertEqual(repair.total, 24)
+        self.assertEqual(repair.verifier_records, 24)
+        self.assertEqual(repair.categories["v16_capability_exact_json_anchor"], 6)
+        self.assertEqual(repair.categories["v16_capability_exact_slash_copy"], 6)
+        self.assertEqual(repair.categories["v16_capability_one_line_plan"], 6)
+        self.assertEqual(repair.categories["v16_capability_keyvalue_anchor"], 6)
         self.assertTrue(all(row["split"] == "train_seed" for row in rows))
         self.assertTrue(all(row["evidence_level"] == "train_seed_not_capability_evidence" for row in rows))
         self.assertTrue(all(row["clean_claim_eligible"] is False for row in rows))
