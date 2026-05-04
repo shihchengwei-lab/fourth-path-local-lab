@@ -633,6 +633,17 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
 
 def render_local_release_gate(data: dict[str, Any]) -> str:
     status = "ok" if not data["errors"] else "error"
+    claim_quality = data.get("capability_claim_quality", {})
+    withdrawn_surfaces = [
+        surface for surface in claim_quality.get("withdrawn_surfaces", []) if isinstance(surface, str)
+    ]
+    withdrawn_summary = (
+        f"{withdrawn_surfaces[0]}-{withdrawn_surfaces[-1]}"
+        if len(withdrawn_surfaces) > 1
+        else (withdrawn_surfaces[0] if withdrawn_surfaces else "none")
+    )
+    next_claim_version = claim_quality.get("next_capability_claim_version") or "unknown"
+    next_required = claim_quality.get("next_required") or "not recorded"
     clean_heldout_keys = sorted(
         (
             key
@@ -707,8 +718,8 @@ def render_local_release_gate(data: dict[str, Any]) -> str:
             error_count=len(data["capability_dev_provenance"]["errors"]),
         ),
         f"Legacy clean heldout files (not evidence): {clean_heldout_summary}",
-        "Withdrawn clean heldout files: old v6-v17 removed",
-        "Capability evidence: v8 eval is spent after comparison; next proof starts at v9",
+        f"Withdrawn clean claim surfaces: {withdrawn_summary}",
+        f"Next clean capability claim: {next_claim_version} - {next_required}",
         (
             "Data quality: records={total_records}, verifier={total_verifier_records} "
             "({overall_verifier_rate:.3f}), types={verifier_type_count}"

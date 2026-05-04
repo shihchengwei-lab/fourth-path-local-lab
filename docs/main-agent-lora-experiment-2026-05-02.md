@@ -352,9 +352,9 @@ The new comparison had clean delta +6, zero regressions, and containment stayed
 
 Important evidence boundary: because v12 directly informed the phrase-copy
 runtime hint, v12 is now diagnostic/spent evidence, not final promotion
-evidence. Do not promote v17 from v12 alone. The next promotion attempt needs a
-new unused clean eval surface after this runtime change; the release gate now
-tracks that next claim surface as v18.
+evidence. Do not promote v17 from v12 alone. The next promotion attempt needed
+a new unused clean eval surface after this runtime change; at that point the
+release gate tracked that next claim surface as v18.
 
 ## 2026-05-05 v18 Fresh Clean Eval Surface
 

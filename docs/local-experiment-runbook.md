@@ -757,8 +757,8 @@ gate: spend_fresh_eval
 
 Do not promote v17 from v12 alone. Because v12 directly informed the
 phrase-copy runtime hint, it is now spent diagnostic evidence. The next
-promotion attempt needs a new unused clean eval surface after this runtime
-change; the release gate now names that next claim surface v18. On Windows, do
+promotion attempt needed a new unused clean eval surface after this runtime
+change; at that point the release gate named that next claim surface v18. On Windows, do
 not run multiple 8B adapter evals in parallel; two
 simultaneous model loads hit pagefile error 1455 in this run.
 

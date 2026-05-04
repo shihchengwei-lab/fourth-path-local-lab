@@ -3650,6 +3650,9 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("Assistant secret marker", encoded)
         self.assertIn("Capability claim quality:", rendered)
         self.assertIn("Capability eval corpora:", rendered)
+        self.assertIn("Withdrawn clean claim surfaces: v6-v18", rendered)
+        self.assertIn("Next clean capability claim: v21", rendered)
+        self.assertNotIn("next proof starts at v9", rendered)
         self.assertNotIn("Capability dev-lane quality:", rendered)
 
     def test_capability_dev_provenance_gate_rejects_clean_claim_labels(self):
