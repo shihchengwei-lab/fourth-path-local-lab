@@ -623,7 +623,7 @@ def render_local_release_gate(data: dict[str, Any]) -> str:
             "({overall_verifier_rate:.3f}), types={verifier_type_count}"
         ).format(**data["data_quality"]),
         (
-            "Capability dev-lane quality: records={total_records}, verifier={total_verifier_records} "
+            "Capability claim quality: records={total_records}, verifier={total_verifier_records} "
             "({overall_verifier_rate:.3f}), types={verifier_type_count}"
         ).format(**data["capability_claim_quality"]),
         f"SFT format rows: {data['sft_format']['rows']}, system={data['sft_format']['system_rows']}",

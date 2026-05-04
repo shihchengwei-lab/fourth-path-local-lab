@@ -2580,6 +2580,7 @@ class PipelineTests(unittest.TestCase):
     def test_local_release_gate_runs_no_ollama_priority_gates_without_private_text(self):
         data = main.local_release_gate_data(main.PROJECT_ROOT / "data" / "cold_eyes_seed.jsonl")
         encoded = json.dumps(data, ensure_ascii=False)
+        rendered = main.render_local_release_gate(data)
 
         self.assertEqual(data["errors"], [])
         self.assertEqual(data["architecture"]["passed"], data["architecture"]["total"])
@@ -2671,6 +2672,8 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("System secret marker", encoded)
         self.assertNotIn("Prompt secret marker", encoded)
         self.assertNotIn("Assistant secret marker", encoded)
+        self.assertIn("Capability claim quality:", rendered)
+        self.assertNotIn("Capability dev-lane quality:", rendered)
 
     def test_capability_dev_provenance_gate_rejects_clean_claim_labels(self):
         import release_gates
