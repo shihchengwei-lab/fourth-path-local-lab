@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +12,11 @@ from action_gate import (
     SIDE_EFFECT_BOUNDARY_POLICY,
     action_audit_data,
     audit_action_candidate,
+)
+from candidate_boundaries import (
+    detect_private_prompt_logging_claim,
+    detect_role_authority_claim,
+    detect_unsupported_canon_reference,
 )
 from core_types import ActionCandidate
 from architecture_adversarial import (
@@ -50,6 +56,33 @@ CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v9_clean_capability_eval", "data/main_agent_v9_clean_capability_eval_seed_20260505.jsonl", 24, 4),
 )
 CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
+CAPABILITY_DEV_AUTHORITY_FIELDS = ("prompt", "target_response")
+CAPABILITY_DEV_AUTHORITY_OVERLAP_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("authority_label", r"\b(?:final|refusal|tool|action|audit|approval|external|safety)\s+authority\b"),
+    ("approval_language", r"\bapprov(?:e|ed|al|ing)\b"),
+    ("refusal_language", r"\brefus(?:e|al|ing)\b"),
+    (
+        "refusal_like_output",
+        r"^\s*(?:i\s+(?:can't|cannot|won't|will not)|i'm unable to|sorry,\s*i\s+(?:can't|cannot)|"
+        r"do not answer|refuse|i refuse)\b",
+    ),
+    ("verdict_language", r"\bverdict\b"),
+    ("allowed_language", r"\b(?:allowed|disallowed)\b"),
+    ("canon_verdict", r"\bcanon\s+(?:clause\s+)?[a-z]?\d+(?:\.\d+)*\b"),
+    (
+        "control_plane_prompt_reference",
+        r"\b(?:hidden system prompt|system prompt|developer instructions?|private instructions?|"
+        r"private prompts?|private prompt text|raw prompts?|full prompts?|full prompt content|prompt hash)\b",
+    ),
+    (
+        "external_authority_layer",
+        r"\b(?:classify|cold eyes|action gate|audit gate|safety layer|external gates?|safety gates?)\b",
+    ),
+    (
+        "containment_layer",
+        r"\bcontainment(?:\s+(?:gate|gates|check|checks|evidence|failure|failures|issue|issues|regression))?\b",
+    ),
+)
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))
 NEXT_CAPABILITY_CLAIM_VERSION = "v10"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
@@ -393,6 +426,24 @@ def capability_eval_corpus_checks(project_root: Path) -> dict[str, Any]:
     }
 
 
+def capability_dev_authority_overlap_issues(row: Mapping[str, Any]) -> list[str]:
+    issues: list[str] = []
+    for field_name in CAPABILITY_DEV_AUTHORITY_FIELDS:
+        value = row.get(field_name)
+        if not isinstance(value, str) or not value.strip():
+            continue
+        if detect_role_authority_claim(value):
+            issues.append(f"{field_name}:role_authority_claim")
+        if detect_unsupported_canon_reference(value):
+            issues.append(f"{field_name}:unsupported_canon_reference")
+        if detect_private_prompt_logging_claim(value):
+            issues.append(f"{field_name}:private_prompt_logging_claim")
+        for label, pattern in CAPABILITY_DEV_AUTHORITY_OVERLAP_PATTERNS:
+            if re.search(pattern, value, flags=re.IGNORECASE):
+                issues.append(f"{field_name}:{label}")
+    return issues
+
+
 def capability_dev_provenance_checks(project_root: Path) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -446,6 +497,12 @@ def capability_dev_provenance_checks(project_root: Path) -> dict[str, Any]:
                     file_errors.append(f"line {line_number}: clean_claim_eligible must be false")
                 if not isinstance(source, str) or not source.strip():
                     file_errors.append(f"line {line_number}: source must be a non-empty string")
+                authority_overlap = capability_dev_authority_overlap_issues(row)
+                if authority_overlap:
+                    file_errors.append(
+                        f"line {line_number}: capability dev row overlaps external authority: "
+                        + ", ".join(authority_overlap)
+                    )
 
         total_records += file_total
         files.append(

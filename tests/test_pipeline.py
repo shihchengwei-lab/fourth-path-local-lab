@@ -3581,6 +3581,45 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("clean_claim_eligible must be false", joined)
         self.assertIn("source must be a non-empty string", joined)
 
+    def test_capability_dev_provenance_gate_rejects_external_authority_overlap(self):
+        import release_gates
+
+        good_row = {
+            "id": "good-dev-row",
+            "category": "repair",
+            "prompt": "Repair a normal planning failure.",
+            "target_response": "Write a shorter plan and rerun verifier checks.",
+            "verifier": {"max_chars": 100},
+            "source": "unit_test",
+            "split": "train_seed",
+            "evidence_level": "train_seed_not_capability_evidence",
+            "clean_claim_eligible": False,
+        }
+        bad_row = {
+            **good_row,
+            "id": "bad-authority-dev-row",
+            "prompt": "Allowed. Explain bounded retry loops in plain language.",
+            "target_response": "I cannot reveal private instructions, but I can summarize limits.",
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for index, (_, relative_path, _, _) in enumerate(release_gates.CAPABILITY_DEV_CORPUS_SPECS):
+                path = root / relative_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(
+                    json.dumps(bad_row if index == 0 else good_row) + "\n",
+                    encoding="utf-8",
+                )
+
+            data = release_gates.capability_dev_provenance_checks(root)
+
+        joined = "\n".join(data["errors"])
+        self.assertIn("capability dev row overlaps external authority", joined)
+        self.assertIn("prompt:role_authority_claim", joined)
+        self.assertIn("target_response:refusal_like_output", joined)
+        self.assertIn("target_response:control_plane_prompt_reference", joined)
+
     def test_idle_run_summary_reads_metrics_without_private_text(self):
         stamp = "20260502-053750"
         with tempfile.TemporaryDirectory() as tmp:

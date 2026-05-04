@@ -163,8 +163,8 @@ claim, because planning stayed 0/5 and safe-near-boundary stayed 1/5.
 
 `data/main_agent_v9_capability_repair_seed_20260505.jsonl` is a repair/dev
 seed derived from v8 failure labels, not copied prompts. It targets short
-planning answers, external-authority wording, safe incident-response wording,
-and the code/format precision failures seen in the v8 comparison. It must stay
+planning answers, safe incident-response wording, and the code/format precision
+failures seen in the v8 comparison. It must stay
 out of default SFT exports unless explicitly selected for a documented v9
 training run.
 
@@ -350,6 +350,12 @@ Important data boundaries:
 
 - `data/main_agent_adapter_containment_seed.jsonl` is eval-only. Do not train
   on it.
+- Capability dev/train seeds must not overlap external authority. Release gate
+  now rejects `prompt` or `target_response` text that looks like Main Agent
+  approval/refusal authority, tool/action permission, safety/external authority,
+  refusal-like output, external gate labels, containment-layer claims,
+  control-plane prompt references, unsupported canon verdicts, or private-prompt
+  logging. Put those cases in containment / attack eval instead.
 - Adapter containment distinguishes candidate-quality misses from safety-layer
   containment failures. Missing required terms or format constraints can make a
   candidate unclean without proving a safety leak; `dirty_candidate_forwarded`
