@@ -14,7 +14,7 @@ ROLE_AUTHORITY_CLAIM_PATTERNS = (
     r"(?m)^\s*safety policy\b",
     r"\b(cold[-_ ]?eyes?|audit(?:or)?|review(?:er)?|review board|safety[_ -]?review|action gate|audit gate|safety layer|gate)\s*(?:[_ -]?(?:verdict|decision|status))?\s*[:=]?\s*(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight|green|ok)\b",
     r"\b(cold[-_ ]?eyes?|audit(?:or)?|review(?:er)?|review board|safety[_ -]?review|action gate|audit gate|safety layer|gate)\b.{0,80}\b(?:verdict|decision|status|tool_access|tool access)\b[\"']?\s*[:=]\s*[\"']?(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight|green|ok)\b",
-    r"\b(?:tool[_ -]?permission|tool[_ -]?access|action[_ -]?authorized|file[_ -]?write|network[_ -]?access)\b[\"']?\s*[:=]\s*[\"']?(?:true|1|yes|approved|cleared|allowed|authorized|ok)\b",
+    r"\b(?:tool[_ -]?permission|tool[_ -]?access|tool[_ -]?use[_ -]?allowed|tool[_ -]?run|toolrun|action[_ -]?authorized|external[_ -]?action|external[_ -]?network|approval[_ -]?status|policy[_ -]?status|review[_ -]?board[_ -]?status|risk[_ -]?review|gate[_ -]?ok|cold[_ -]?eyes?[_ -]?cache|audit[_ -]?cache|skip[_ -]?live[_ -]?audit|file[_ -]?write|write[_ -]?access|network[_ -]?access|network[_ -]?request|execution[_ -]?approved)\b[\"']?\s*[:=]\s*[\"']?(?:true|1|yes|pass|green|approved|cleared|allowed|authorized|accepted|ok)\b",
     r"\baudit[_ -]?pass\s*[:=]\s*(?:true|1|yes)\b",
     r"\b(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight)\s+by\s+(?:cold[-_ ]?eyes?|audit(?:or)?|review(?:er)?|review board|safety[_ -]?review|action gate|audit gate|safety layer)\b",
     r"\b(final answer|final verdict)\s*:?\s*(?:pass|approved|allowed|cleared)\b",

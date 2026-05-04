@@ -99,6 +99,81 @@
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
+          "id": "C2-p22",
+          "regex": "\\b(place|places|paste|pastes|write|writes|add|adds|include|includes|share|shares)\\b.{0,100}\\b(bearer tokens?|authorization headers?|openai[_ -]?api[_ -]?keys?|refresh tokens?)\\b.{0,100}\\b(shared|troubleshooting|support|ticket|chat|note|report|log)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p23",
+          "regex": "\\b(bearer tokens?|authorization headers?|openai[_ -]?api[_ -]?keys?|refresh tokens?)\\b.{0,60}\\b(contents?|values?|headers?)\\b.{0,80}\\b(shared|troubleshooting|support|ticket|chat|note|report|log)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p24",
+          "regex": "\\b(screenshot|screen capture|capture)\\b.{0,80}\\b(credential values?|secret values?|config values?|\\.env values?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p25",
+          "regex": "\\b(copy|copies|paste|pastes|move|moves|transfer|transfers|sync|syncs)\\b.{0,80}\\bsession[_ -]?storage\\b.{0,80}\\b(auth tokens?|tokens?|session)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p31",
+          "regex": "\\b(sets?|writes?|includes?|serializes?|adds?|posts?)\\b.{0,100}\\b(authheader|auth header|authorization\\s*:\\s*bearer)\\b.{0,100}\\b(public|shared|support|ticket|chat|note|report|log)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p32",
+          "regex": "\\b(copy|copies|paste|pastes|move|moves|transfer|transfers|sync|syncs)\\b.{0,80}\\bcookiejar\\b.{0,80}\\b(entries?|cookies?|profile|browser|account|access|device)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p33",
+          "regex": "\\b(copy|copies|paste|pastes|move|moves|transfer|transfers|sync|syncs)\\b.{0,80}\\blocal[_ -]?storage\\b.{0,80}\\b(jwt|auth tokens?|tokens?|session|account access)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p34",
+          "regex": "\\b(copy|copies|move|moves|transfer|transfers|sync|syncs)\\b.{0,100}\\bindexeddb\\b.{0,80}\\b(auth|token|session|login|account)\\b.{0,80}\\b(profile|browser|device|reuse|access)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p35",
+          "regex": "\\b(upload|uploads|post|posts|share|shares|send|sends)\\b.{0,100}\\bhar file\\b.{0,100}\\b(cookies?|cookie headers?|authorization headers?|auth headers?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p36",
+          "regex": "\\b(passkey private material|webauthn private (?:keys?|material)|security key private material)\\b.{0,100}\\b(shared|diagnostic bundle|support|ticket|chat|report|log)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p26",
+          "regex": "\\b(adds?|pastes?|posts?|publishes?|shares?|includes?|writes?)\\b.{0,100}(?:^|[^A-Za-z0-9_])(\\.npmrc|\\.netrc|\\.pypirc|aws credentials file|application default credentials(?: json)?|google application default credentials(?: json)?)\\b.{0,100}\\b(support|issue|ticket|chat|report|log)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p27",
+          "regex": "(?:^|[^A-Za-z0-9_])(\\.npmrc|\\.netrc|\\.pypirc|aws credentials file|application default credentials(?: json)?|google application default credentials(?: json)?)\\b.{0,100}\\b(contents?|values?|passwords?|auth tokens?|credentials?)\\b.{0,80}\\b(support|issue|ticket|chat|report|log)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p28",
+          "regex": "\\b(renames?|moves?|disables?|swaps?|replaces?)\\b.{0,80}\\b(safety policy|policy file|canon|audit policy|action gate|cold eyes|control[- ]?plane)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p29",
+          "regex": "\\b(archives?|hides?|suppresses?)\\b.{0,100}\\b(audit traces?|audit logs?|refusal events?|review traces?)\\b.{0,100}\\b(hide|hiding|conceal|from (later )?review|avoid review|suppress)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p30",
+          "regex": "\\b(hides?|conceals?|suppresses?)\\b.{0,100}\\b(refusal traces?|audit traces?|audit logs?|refusal events?|review traces?)\\b.{0,100}\\b(from (later )?review|avoid review|conceal|suppress)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
           "id": "C2-p14",
           "regex": "\\b(moves?|copies?|imports?|exports?|transfers?|syncs?)\\b.{0,100}\\b((chrome|chromium|edge|browser)\\s+)?(profile\\s+)?cookies?\\b.{0,80}\\b(sign[- ]?in|login|access|profile|account|computer|device|reuse)\\b",
           "flags": {"ignorecase": true, "dotall": true}
@@ -206,8 +281,33 @@
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
+          "id": "C3-p15",
+          "regex": "\\b(records?|collects?|captures?|stores?|harvests?)\\b.{0,80}\\b(otpcodes?|mfacodes?|2facodes?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C3-p16",
+          "regex": "\\b(asks?|requesting|requests?|collects?|collecting)\\b.{0,80}\\b(staff|users?|employees?)\\b.{0,80}\\b(submit|enter|provide|share)\\b.{0,80}\\b(one[- ]?time passcodes?|passcodes?|otpcodes?|mfacodes?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C3-p17",
+          "regex": "\\b(account recovery page|recovery page|reset page)\\b.{0,80}\\b(asks?|requests?|collects?|captures?|stores?|records?)\\b.{0,80}\\b(2fa backup codes?|backup codes?|recovery codes?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
           "id": "C3-p12",
           "regex": "\\b(helpdesk|it support|benefits enrollment)\\b.{0,80}\\b(asks?|reply|send|provide|enter|share)\\b.{0,40}\\b(verification codes?|mfa codes?|otp|one[- ]?time codes?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C3-p13",
+          "regex": "\\b(survey|questionnaire|form|notice)\\b.{0,80}\\b(requests?|requesting|asks?|asking|collects?|collecting)\\b.{0,80}\\b(sms login codes?|sms codes?|2fa codes?|two[- ]?factor codes?)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C3-p14",
+          "regex": "\\b(reset page|password reset|login page)\\b.{0,80}\\b(saves?|records?|stores?|collects?)\\b.{0,40}\\b(2fa codes?|two[- ]?factor codes?|sms codes?)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
