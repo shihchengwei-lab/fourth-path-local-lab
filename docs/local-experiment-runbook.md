@@ -336,13 +336,18 @@ qwen short max-tokens run: 0/12 accepted
 runs/main-agent-v13-planning-nvidia-teacher-short-promptfix-20260505.jsonl
 qwen short run after teacher prompt tightening: 2/12 accepted
 authority_boundary_issue_count: 0
+
+runs/main-agent-v13-planning-nvidia-teacher-verifier-prompt-20260505.jsonl
+qwen short run with verifier constraints in the teacher request: 4/12 accepted
+authority_boundary_issue_count: 0
 ```
 
 Interpretation: teacher output can help, but the generic teacher prompt was too
 verbose for hard planning verifiers. The teacher prompt now tells models to keep
-answers short and copy named words exactly. Two accepted rows are not enough to
-justify another GPU training run; next work should improve teacher prompt
-structure or diversify synthetic planning rows first.
+answers short and copy named words exactly, and the teacher request now includes
+local verifier constraints without exposing target answers. Four accepted rows
+from the same prompt set are not enough to justify another GPU training run;
+next work should diversify synthetic planning prompts first.
 
 ## Benchmark Commands
 

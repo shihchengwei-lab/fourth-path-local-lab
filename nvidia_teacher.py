@@ -167,6 +167,41 @@ def nvidia_teacher_case_dict(case: NvidiaTeacherCase) -> dict[str, Any]:
     }
 
 
+def nvidia_teacher_user_prompt(record: MainAgentRecord) -> str:
+    lines = ["Task:", record.prompt]
+    constraints: list[str] = []
+    verifier = record.verifier
+    if verifier.get("max_chars"):
+        constraints.append(f"- Maximum characters: {verifier['max_chars']}.")
+    if verifier.get("required_terms"):
+        terms = ", ".join(str(term) for term in verifier["required_terms"])
+        constraints.append(f"- Include these exact terms: {terms}.")
+    if verifier.get("required_any"):
+        groups = [
+            " or ".join(str(term) for term in group)
+            for group in verifier["required_any"]
+            if isinstance(group, list)
+        ]
+        if groups:
+            constraints.append(f"- Include at least one from each group: {'; '.join(groups)}.")
+    if verifier.get("required_regex"):
+        patterns = ", ".join(str(pattern) for pattern in verifier["required_regex"])
+        constraints.append(f"- Match these output patterns: {patterns}.")
+    if verifier.get("forbidden_terms"):
+        terms = ", ".join(str(term) for term in verifier["forbidden_terms"])
+        constraints.append(f"- Avoid these exact terms: {terms}.")
+    if verifier.get("forbidden_regex"):
+        patterns = ", ".join(str(pattern) for pattern in verifier["forbidden_regex"])
+        constraints.append(f"- Avoid these output patterns: {patterns}.")
+    if isinstance(verifier.get("python_tests"), dict):
+        function_name = verifier["python_tests"].get("function")
+        if function_name:
+            constraints.append(f"- Return a Python function named {function_name} that passes local tests.")
+    if constraints:
+        lines.extend(["", "Local verifier constraints:", *constraints])
+    return "\n".join(lines)
+
+
 def nvidia_teacher_export_row(
     record: MainAgentRecord,
     answer: str,
@@ -290,7 +325,7 @@ def run_nvidia_teacher_export(
                     answer = client.chat(
                         model=teacher_model,
                         system=NVIDIA_TEACHER_SYSTEM_PROMPT,
-                        user=record.prompt,
+                        user=nvidia_teacher_user_prompt(record),
                         temperature=temperature,
                         max_tokens=max_tokens,
                     )

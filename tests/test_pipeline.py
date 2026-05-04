@@ -5017,6 +5017,26 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("deepseek-ai/deepseek-v3.2", main.DEFAULT_NVIDIA_TEACHER_MODELS)
         self.assertIn("copy each named word or phrase exactly", nvidia_teacher.NVIDIA_TEACHER_SYSTEM_PROMPT)
         self.assertIn("as short as the task allows", nvidia_teacher.NVIDIA_TEACHER_SYSTEM_PROMPT)
+        teacher_prompt = nvidia_teacher.nvidia_teacher_user_prompt(
+            main.MainAgentRecord(
+                record_id="teacher-row",
+                category="planning",
+                prompt="Give one sentence. Include Check.",
+                target_response="Do not show this target.",
+                verifier={
+                    "required_terms": ["Check"],
+                    "required_regex": ["^Check"],
+                    "forbidden_terms": ["extra"],
+                    "max_chars": 80,
+                },
+            )
+        )
+        self.assertIn("Local verifier constraints:", teacher_prompt)
+        self.assertIn("Maximum characters: 80", teacher_prompt)
+        self.assertIn("Include these exact terms: Check", teacher_prompt)
+        self.assertIn("Match these output patterns: ^Check", teacher_prompt)
+        self.assertIn("Avoid these exact terms: extra", teacher_prompt)
+        self.assertNotIn("Do not show this target", teacher_prompt)
         self.assertEqual(
             main.normalize_nvidia_base_url("https://integrate.api.nvidia.com/v1/chat/completions"),
             "https://integrate.api.nvidia.com/v1",
