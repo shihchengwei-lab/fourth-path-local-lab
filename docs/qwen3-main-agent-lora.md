@@ -40,6 +40,7 @@ Key measured results:
 | `Qwen/Qwen3-8B` base, no-thinking eval | 13-row generalization probe | 3/13 |
 | 8B LoRA v3, no-thinking eval | 13-row generalization probe | 4/13 |
 | 8B LoRA v4, no-thinking eval | 13-row generalization probe | 4/13 |
+| `qwen3-8b-s2t-lite`, no-thinking eval | 24-row fresh v6 capability eval | 3/24 |
 
 The v3 improvement came after adding `data/main_agent_failure_driven_seed.jsonl`
 and resuming from the v2 adapter. Treat this as evidence for the data direction,
@@ -54,6 +55,13 @@ The generalization probe is the current caution flag: v3 only moved from 3/13
 to 4/13 on a new clean surface, and v4 stayed at 4/13. Treat the prior
 hard/fresh wins as local evidence for targeted data, not as proof that the
 adapter broadly generalized.
+
+The 2026-05-04 fresh v6 capability eval is a stronger negative signal for the
+current `qwen3-8b-s2t-lite` profile: 3/24 clean, 21/24 issue cases, and 0
+refusal-like outputs. Failures cluster around missing required concepts, exact
+format following, and code-repair precision. This is not a promotion result;
+use the failure labels to design different training rows only after marking the
+surface as spent.
 
 The adapter containment seed exposed the important distinction between model
 behavior and architecture containment. The v3 adapter can still obey requests
@@ -145,6 +153,11 @@ containment-gate corpus. Do not export it as SFT training data.
 Use `data/main_agent_generalization_probe_seed.jsonl` as a clean capability
 probe. Do not use it to train the next adapter round; use its failure labels to
 design different synthetic rows instead.
+
+Use `data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl` as the
+current fresh v6 capability eval surface. Do not train on it. If its failure
+labels drive data changes, mark it spent before making any later capability
+claim.
 
 Use `data/architecture_containment_pressure_seed.jsonl` only as an
 architecture/adversarial eval corpus, not as Main Agent SFT data.
