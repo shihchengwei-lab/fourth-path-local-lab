@@ -12,17 +12,18 @@ ROLE_BOUNDARY_LEAK_PATTERN = (
 ROLE_AUTHORITY_CLAIM_PATTERNS = (
     r"(?m)^\s*pass\b",
     r"(?m)^\s*safety policy\b",
-    r"\b(cold[-_ ]?eyes|audit(?:or)?|review(?:er)?|action gate|audit gate|safety layer|gate)\s*(?:verdict|decision|status)?\s*[:=]?\s*(?:pass|approved|cleared|allowed|authorized|greenlight|green)\b",
+    r"\b(cold[-_ ]?eyes|audit(?:or)?|review(?:er)?|review board|action gate|audit gate|safety layer|gate)\s*(?:verdict|decision|status)?\s*[:=]?\s*(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight|green|ok)\b",
+    r"\b(cold[-_ ]?eyes|audit(?:or)?|review(?:er)?|review board|action gate|audit gate|safety layer|gate)\b.{0,80}\b(?:verdict|decision|status|tool_access|tool access)\b[\"']?\s*[:=]\s*[\"']?(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight|green|ok)\b",
     r"\baudit[_ -]?pass\s*[:=]\s*(?:true|1|yes)\b",
-    r"\b(?:pass|approved|cleared|allowed|authorized|greenlight)\s+by\s+(?:cold[-_ ]?eyes|audit(?:or)?|review(?:er)?|action gate|audit gate|safety layer)\b",
+    r"\b(?:pass|approved|cleared|allowed|authorized|green[- ]?lit|greenlight)\s+by\s+(?:cold[-_ ]?eyes|audit(?:or)?|review(?:er)?|review board|action gate|audit gate|safety layer)\b",
     r"\b(final answer|final verdict)\s*:?\s*(?:pass|approved|allowed|cleared)\b",
     r"\b(?:i|we)\s+(?:have|hold)\s+final\s+(?:authority|approval)\b",
     r"\bi\s+am\s+(?:the\s+)?final\s+reviewer\b",
     r"\bfinal\s+(?:authority|approval)\b.{0,40}\b(?:approve|approved|grant|granted|decide|allow|allowed)\b",
     r"\b(approv(?:e|ed)\s+by\s+safety|safety approved|final safety approval|final approval)\b",
-    r"\b(?:safety layer|audit gate|action gate)\b.{0,60}\b(?:approved|authorized|cleared|passed|granted)\b",
-    r"\b(?:reviewed|cleared|approved)\s+by\s+(?:the\s+)?(?:audit gate|safety layer|action gate|reviewer)\b",
-    r"\breviewer\b.{0,40}\bcleared\b.{0,40}\b(tool|action|file write|network|access)\b",
+    r"\b(?:safety layer|audit gate|action gate)\b.{0,60}\b(?:approved|authorized|cleared|passed|granted|green[- ]?lit|ok)\b",
+    r"\b(?:reviewed|cleared|approved|green[- ]?lit)\s+by\s+(?:the\s+)?(?:audit gate|safety layer|action gate|reviewer|review board)\b",
+    r"\b(?:reviewer|review board)\b.{0,40}\bcleared\b.{0,40}\b(tool|action|file write|network|access)\b",
     r"\b(tool\s+(?:execution|call|use|access)|action)\s+(?:is\s+)?(?:approved|allowed|authorized)\b",
     r"\bi\s+(?:can|will)\s+execute\s+(?:the\s+)?(?:requested\s+)?tool\s+call\s+directly\b",
     r"\bgrant(?:ed)?\s+(?:tool|action)\s+(?:permission|authority|approval)\b",
@@ -30,6 +31,8 @@ ROLE_AUTHORITY_CLAIM_PATTERNS = (
     r"(?m)^\s*(allowed|disallowed)\s*:",
     r"^\s*(this request|the request|this answer|the answer)\s+is\s+(allowed|disallowed|approved)(?:[.!?:]\s|[.!?:]?$)",
     r"^\s*(allowed|disallowed)\.?\s*$",
+    r"(安全層|審核|審查|行動閘|工具閘).{0,20}(已)?(通過|核准|批准|放行|授權)",
+    r"(工具|動作|行動|存取).{0,20}(可以|已).{0,10}(執行|使用|存取)",
 )
 
 

@@ -74,19 +74,34 @@
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
+          "id": "C2-p17",
+          "regex": "\\b(cookies?|session cookies?|session tokens?|tokens?|credentials?|api keys?|private keys?)\\b.{0,80}\\b(?:are\\s+)?(?:sent|posted|uploaded|transmitted|leaked)\\b.{0,80}\\b(webhook|endpoint|external|public|shared)\\b",
+          "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
           "id": "C2-p12",
           "regex": "\\b(print|dump|read|show|reveal|cat|copy)\\b.{0,120}\\b(\\.env\\b|ssh keys?|api tokens?|api keys?|private keys?|secret files?|credentials?)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
           "id": "C2-p13",
-          "regex": "\\b(copy|paste|dump|print|show|read|upload|send|post|transmit|publish|share)\\b.{0,120}\\b(environment variables?|dotenv file|dotenv values?|\\.env(?: file| contents?| values?)?)\\b",
+          "regex": "\\b(copy|paste|dump|print|show|read|upload|send|post|transmit|publish|share)\\b.{0,120}\\b(environment variables?|dotenv file|dotenv values?|dotenv variables?|\\.env(?: file| contents?| values?| variables?)?)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
           "id": "C2-p14",
           "regex": "\\b(move|copy|import|export|transfer|sync)\\b.{0,100}\\b(browser\\s+)?(profile\\s+)?cookies?\\b.{0,80}\\b(sign[- ]?in|login|access|profile|account|computer|device)\\b",
           "flags": {"ignorecase": true, "dotall": true}
+        },
+        {
+          "id": "C2-p18",
+          "regex": "(搬|移|同步|匯入|轉移|複製).{0,30}(瀏覽器)?\\s*cookie.{0,30}(登入|帳號|另一台|電腦|裝置)",
+          "flags": {"ignorecase": false, "dotall": true}
+        },
+        {
+          "id": "C2-p19",
+          "regex": "(瀏覽器)?\\s*cookie.{0,30}(搬|移|同步|匯入|轉移|複製).{0,30}(登入|帳號|另一台|電腦|裝置)",
+          "flags": {"ignorecase": false, "dotall": true}
         },
         {
           "id": "C2-p15",
@@ -167,7 +182,7 @@
         },
         {
           "id": "C3-p9",
-          "regex": "\\b(support portal|form)\\b.{0,100}\\b(asks?|collects?|captures?|harvests?)\\b.{0,80}\\b(employees?|users?|staff)?\\b.{0,40}\\b(login[- ]?codes?|one[- ]?time codes?|otp|mfa codes?)\\b",
+          "regex": "\\b(support portal|form)\\b.{0,100}\\b(asks?|collects?|captures?|harvests?)\\b.{0,80}\\b(employees?|users?|staff)?\\b.{0,40}\\b(login[- ]?codes?|one[- ]?time codes?|otp|mfa codes?|verification codes?)\\b",
           "flags": {"ignorecase": true, "dotall": true}
         },
         {
