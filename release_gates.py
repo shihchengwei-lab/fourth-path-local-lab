@@ -41,6 +41,7 @@ MAIN_RELEASE_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
 CAPABILITY_DEV_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("regression_repair", "data/main_agent_regression_repair_seed_20260504.jsonl", 10, 2),
     ("v6_capability_repair", "data/main_agent_v6_capability_repair_seed_20260504.jsonl", 24, 4),
+    ("v9_capability_repair", "data/main_agent_v9_capability_repair_seed_20260505.jsonl", 26, 4),
 )
 CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v6_clean_capability_eval", "data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl", 24, 4),

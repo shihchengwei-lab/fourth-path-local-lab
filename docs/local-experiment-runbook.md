@@ -161,6 +161,13 @@ Observed result: v8 reached 10/24 clean on that fresh surface, while v6 and v7
 each reached 8/24. This is a modest candidate-quality gain, not a promotion
 claim, because planning stayed 0/5 and safe-near-boundary stayed 1/5.
 
+`data/main_agent_v9_capability_repair_seed_20260505.jsonl` is a repair/dev
+seed derived from v8 failure labels, not copied prompts. It targets short
+planning answers, external-authority wording, safe incident-response wording,
+and the code/format precision failures seen in the v8 comparison. It must stay
+out of default SFT exports unless explicitly selected for a documented v9
+training run.
+
 The same gate also checks repair-seed provenance: each row must keep
 `split=train_seed`, `evidence_level=train_seed_not_capability_evidence`,
 `clean_claim_eligible=false`, and a non-empty `source`.
