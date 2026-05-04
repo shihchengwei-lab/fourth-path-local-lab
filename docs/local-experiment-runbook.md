@@ -453,6 +453,36 @@ Interpretation: v13 is better than v14 on this fairer prompt-visible eval.
 Do not promote v14. Since v11 has now been used for comparison, the next clean
 capability claim requires a fresh unused v12 eval surface after the next repair.
 
+v15 visible-constraint repair seed:
+
+```text
+seed: data/main_agent_v15_visible_constraint_repair_seed_20260505.jsonl
+sft:  runs/main-agent-v15-visible-constraint-repair-sft-20260505.jsonl
+rows: 24
+categories:
+- v15_capability_exact_json: 8
+- v15_capability_phrase_planning: 8
+- v15_capability_literal_keyvalue: 4
+- v15_capability_exact_bullets: 4
+```
+
+The v15 seed targets the two v13 misses on v11: exact JSON key/value copying and
+visible phrase preservation in short plans. It is training/dev material only,
+with `clean_claim_eligible=false`; release gate verifies it has no authority,
+refusal, audit, action, or control-plane overlap.
+
+Training-data reports:
+
+```text
+local SFT: rows 24, system_rows 24, authority_boundary_issue_count 0, format_errors []
+NVIDIA teacher: accepted 16/24, authority_boundary_issue_count 0, format_errors []
+best+teacher SFT: rows 28, authority_boundary_issue_count 0, format_errors []
+```
+
+Teacher alternates add four planning variants; JSON and key-value accepted rows
+were mostly identical to the local targets, so they were not duplicated in the
+best+teacher SFT.
+
 Code maintenance note:
 
 ```text
