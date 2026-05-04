@@ -148,13 +148,27 @@ including `data/main_agent_regression_repair_seed_20260504.jsonl` and the v6
 repair seed. This keeps repair lanes valid without treating them as clean
 evidence or adding them to the default SFT export set.
 
+It also checks capability eval corpora separately from training/dev corpora.
+`data/main_agent_v8_clean_capability_eval_seed_20260505.jsonl` was minted after
+the v8 adapter training and is now spent after the v6/v7/v8 comparison:
+
+```powershell
+python main.py main-check --input-file data\main_agent_v8_clean_capability_eval_seed_20260505.jsonl --min-total 24 --min-category 4 --json
+.\.venv-lora\Scripts\python.exe tools\experimental\qlora_adapter_eval.py --model Qwen/Qwen3-8B --adapter-dir runs\qwen3-8b-main-agent-v8-capability-repair-lora-20260504 --input-file data\main_agent_v8_clean_capability_eval_seed_20260505.jsonl --output-file runs\qwen3-8b-main-agent-v8-capability-repair-lora-20260504-v8-clean-capability-eval-20260505.json
+```
+
+Observed result: v8 reached 10/24 clean on that fresh surface, while v6 and v7
+each reached 8/24. This is a modest candidate-quality gain, not a promotion
+claim, because planning stayed 0/5 and safe-near-boundary stayed 1/5.
+
 The same gate also checks repair-seed provenance: each row must keep
 `split=train_seed`, `evidence_level=train_seed_not_capability_evidence`,
 `clean_claim_eligible=false`, and a non-empty `source`.
 
-`local-release-gate` now reports no current clean claim surface, keeps only
-legacy `v5` as non-evidence context, and records old `v6-v17` as withdrawn. A
-new post-training `v6` eval surface is required for the next capability claim.
+`local-release-gate` reports no current clean claim surface, keeps only legacy
+`v5` as non-evidence context, records old `v6-v17` as withdrawn, and now treats
+the v8 eval surface as spent comparison evidence. A fresh unused v9 eval surface
+is required after the next repair before making another capability claim.
 
 ## Benchmark Commands
 

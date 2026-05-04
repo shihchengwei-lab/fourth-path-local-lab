@@ -42,11 +42,15 @@ CAPABILITY_DEV_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("regression_repair", "data/main_agent_regression_repair_seed_20260504.jsonl", 10, 2),
     ("v6_capability_repair", "data/main_agent_v6_capability_repair_seed_20260504.jsonl", 24, 4),
 )
+CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
+    ("v6_clean_capability_eval", "data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl", 24, 4),
+    ("v8_clean_capability_eval", "data/main_agent_v8_clean_capability_eval_seed_20260505.jsonl", 24, 4),
+)
 CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))
-NEXT_CAPABILITY_CLAIM_VERSION = "v6"
+NEXT_CAPABILITY_CLAIM_VERSION = "v9"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
-    "mint a fresh unused v6 capability eval surface after training"
+    "mint a fresh unused v9 capability eval surface after the next repair"
 )
 
 
@@ -375,6 +379,17 @@ def capability_dev_corpus_checks(project_root: Path) -> dict[str, Any]:
     }
 
 
+def capability_eval_corpus_checks(project_root: Path) -> dict[str, Any]:
+    return {
+        key: apply_main_agent_requirements(
+            check_main_agent_corpus(project_root / relative_path),
+            min_total=min_total,
+            min_category=min_category,
+        )
+        for key, relative_path, min_total, min_category in CAPABILITY_EVAL_CORPUS_SPECS
+    }
+
+
 def capability_dev_provenance_checks(project_root: Path) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -484,6 +499,7 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
     architecture_pressures = architecture_pressure_checks(config.project_root)
     main_corpus_checks = main_release_corpus_checks(config.project_root)
     capability_dev_checks = capability_dev_corpus_checks(config.project_root)
+    capability_eval_checks = capability_eval_corpus_checks(config.project_root)
     capability_dev_provenance = capability_dev_provenance_checks(config.project_root)
     clean_heldout_checks, clean_heldout_paths = legacy_clean_heldout_checks(config.project_root)
     data_quality = config.main_data_quality_check_data(list(config.main_data_quality_files))
@@ -508,6 +524,8 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
         errors.extend(prefixed_errors(f"main_{key}", check.errors))
     for key, check in capability_dev_checks.items():
         errors.extend(prefixed_errors(f"capability_dev_{key}", check.errors))
+    for key, check in capability_eval_checks.items():
+        errors.extend(prefixed_errors(f"capability_eval_{key}", check.errors))
     errors.extend(prefixed_errors("capability_dev_provenance", capability_dev_provenance["errors"]))
     errors.extend(prefixed_errors("data_quality", data_quality["errors"]))
     errors.extend(prefixed_errors("capability_claim_quality", data_quality["errors"]))
@@ -530,6 +548,9 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
         },
         "capability_dev_corpora": {
             key: check.public_dict() for key, check in capability_dev_checks.items()
+        },
+        "capability_eval_corpora": {
+            key: check.public_dict() for key, check in capability_eval_checks.items()
         },
         "capability_dev_provenance": capability_dev_provenance,
         "data_quality": main_data_quality_summary(data_quality),
@@ -562,6 +583,10 @@ def render_local_release_gate(data: dict[str, Any]) -> str:
     capability_dev_summary = ", ".join(
         f"{key}={corpus['total']}"
         for key, corpus in sorted(data.get("capability_dev_corpora", {}).items())
+    )
+    capability_eval_summary = ", ".join(
+        f"{key}={corpus['total']}"
+        for key, corpus in sorted(data.get("capability_eval_corpora", {}).items())
     )
     lines = [
         f"Local release gate: {status}",
@@ -609,6 +634,7 @@ def render_local_release_gate(data: dict[str, Any]) -> str:
             latent_probe=data["main_corpora"]["latent_probe"]["total"],
         ),
         f"Capability dev corpora: {capability_dev_summary}",
+        f"Capability eval corpora: {capability_eval_summary}",
         (
             "Capability dev provenance: records={total_records}, errors={error_count}"
         ).format(
@@ -617,7 +643,7 @@ def render_local_release_gate(data: dict[str, Any]) -> str:
         ),
         f"Legacy clean heldout files (not evidence): {clean_heldout_summary}",
         "Withdrawn clean heldout files: old v6-v17 removed",
-        "Capability evidence: no current clean claim surface; next proof restarts at v6",
+        "Capability evidence: v8 eval is spent after comparison; next proof starts at v9",
         (
             "Data quality: records={total_records}, verifier={total_verifier_records} "
             "({overall_verifier_rate:.3f}), types={verifier_type_count}"

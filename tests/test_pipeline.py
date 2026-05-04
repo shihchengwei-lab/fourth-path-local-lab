@@ -3442,6 +3442,9 @@ class PipelineTests(unittest.TestCase):
         )
         self.assertEqual(data["capability_dev_provenance"]["clean_claim_eligible_counts"], {"false": 34})
         self.assertEqual(data["capability_dev_provenance"]["errors"], [])
+        self.assertEqual(data["capability_eval_corpora"]["v6_clean_capability_eval"]["total"], 24)
+        self.assertEqual(data["capability_eval_corpora"]["v8_clean_capability_eval"]["total"], 24)
+        self.assertEqual(data["capability_eval_corpora"]["v8_clean_capability_eval"]["errors"], [])
         for version in range(6, 18):
             self.assertNotIn(f"v{version}_clean_heldout", data["main_corpora"])
         self.assertEqual(data["data_quality"]["verifier_type_count"], 8)
@@ -3455,7 +3458,7 @@ class PipelineTests(unittest.TestCase):
         )
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][0], "v6")
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][-1], "v17")
-        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v6")
+        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v9")
         self.assertEqual(data["capability_claim_quality"]["total_records"], 102)
         self.assertEqual(data["capability_claim_quality"]["total_verifier_records"], 62)
         self.assertEqual(data["capability_claim_quality"]["verifier_type_count"], 8)
@@ -3487,12 +3490,19 @@ class PipelineTests(unittest.TestCase):
                 for path in data["sft_format"]["source_paths"]
             )
         )
+        self.assertFalse(
+            any(
+                path.endswith("main_agent_v8_clean_capability_eval_seed_20260505.jsonl")
+                for path in data["sft_format"]["source_paths"]
+            )
+        )
         self.assertEqual(data["sft_format"]["errors"], [])
         self.assertEqual(data["distill"]["total"], 44)
         self.assertNotIn("System secret marker", encoded)
         self.assertNotIn("Prompt secret marker", encoded)
         self.assertNotIn("Assistant secret marker", encoded)
         self.assertIn("Capability claim quality:", rendered)
+        self.assertIn("Capability eval corpora:", rendered)
         self.assertNotIn("Capability dev-lane quality:", rendered)
 
     def test_capability_dev_provenance_gate_rejects_clean_claim_labels(self):
@@ -3916,6 +3926,45 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(repair.categories["v6_capability_repair_safe_near_boundary"], 5)
         self.assertEqual(verifier_failures, {})
         self.assertFalse(any(record.prompt in known_prompts for record in repair_records))
+
+    def test_main_agent_v8_clean_capability_eval_seed_is_valid_and_separate(self):
+        path = main.PROJECT_ROOT / "data" / "main_agent_v8_clean_capability_eval_seed_20260505.jsonl"
+        v8_clean = main.check_main_agent_corpus(path)
+        source_paths = [
+            main.PROJECT_ROOT / "data" / "main_agent_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_hard_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_rotated_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_fresh_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_latent_probe_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_generalization_probe_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_generalization_driven_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v5_clean_heldout_seed.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v6_clean_capability_eval_seed_20260504.jsonl",
+            main.PROJECT_ROOT / "data" / "main_agent_v6_capability_repair_seed_20260504.jsonl",
+        ]
+        known_records = []
+        for source_path in source_paths:
+            records, _, _ = main.load_main_agent_records(source_path)
+            known_records.extend(records)
+        known_prompts = {record.prompt for record in known_records}
+        v8_records, _, _ = main.load_main_agent_records(path)
+        verifier_failures = {
+            record.record_id: main.main_verifier_issues(record.target_response, record.verifier)
+            for record in v8_records
+            if main.main_verifier_issues(record.target_response, record.verifier)
+        }
+
+        self.assertEqual(v8_clean.errors, [])
+        self.assertEqual(v8_clean.total, 24)
+        self.assertEqual(v8_clean.verifier_records, 24)
+        self.assertEqual(v8_clean.categories["v8_clean_math"], 4)
+        self.assertEqual(v8_clean.categories["v8_clean_code_repair"], 5)
+        self.assertEqual(v8_clean.categories["v8_clean_format_constraints"], 5)
+        self.assertEqual(v8_clean.categories["v8_clean_planning"], 5)
+        self.assertEqual(v8_clean.categories["v8_clean_safe_near_boundary"], 5)
+        self.assertEqual(verifier_failures, {})
+        self.assertFalse(any(record.prompt in known_prompts for record in v8_records))
 
     def test_main_agent_latent_probe_seed_corpus_is_valid_and_separate(self):
         path = main.PROJECT_ROOT / "data" / "main_agent_latent_probe_seed.jsonl"
