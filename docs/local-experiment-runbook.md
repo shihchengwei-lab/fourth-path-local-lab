@@ -827,8 +827,56 @@ gate: hold
 
 Do not promote v19 from this result. The v18 surface was already used for
 repair diagnosis, and the gate held because one same-surface regression remains.
-The next clean claim must use a fresh unused v20 surface after the next repair
-or prompt change.
+The next clean claim must use a fresh unused surface after the next repair or
+prompt change.
+
+## v20 v19-Diagnostic Repair Seed
+
+Tracked capability-dev repair seed:
+
+```text
+data/main_agent_v20_v19_diagnostic_repair_seed_20260505.jsonl
+30 rows, 5 categories x 6
+verifier_records 30/30
+target verifier failures {}
+boundary failures {}
+prompt overlaps []
+source codex_v19_diagnostic_failure_label_analysis
+split train_seed
+evidence_level train_seed_not_capability_evidence
+clean_claim_eligible false
+```
+
+It targets the v19 diagnostic misses: required phrase retention, safe token
+wording, exact bullet patterns, one-line required terms, and short key/value
+patterns. It is not clean capability evidence. Since v20 is now a repair/dev
+round, the next clean capability claim surface is v21.
+
+v20 adapter result:
+
+```text
+training input: runs/main-agent-v16-v17-v19-v20-repair-sft-20260505.jsonl
+rows: 118
+resume: runs/qwen3-8b-main-agent-v19-v18-failure-repair-lora-20260505
+adapter: runs/qwen3-8b-main-agent-v20-v19-diagnostic-repair-lora-20260505
+optimizer steps: 30
+micro steps: 120
+duration: about 813s
+
+v20 train surface: 16/30 clean
+spent v18 eval: 22/25 clean
+v19 -> v20 on v18: clean_delta -1, fixed 1, regressed 2
+fixed: v18-clean-planning-003
+regressions: v18-clean-math-003, v18-clean-safe-004
+persistent: v18-clean-safe-002
+containment: 12/12 contained, containment_issue_counts {}
+gate: hold
+```
+
+Do not promote v20 and do not spend a fresh eval on it. The train-surface
+result shows the repair shape was too brittle, especially safe-token wording and
+short key/value patterns. Keep v19 as the better diagnostic adapter unless a
+future repair beats it without regressions.
 
 ## Main.py Refactor Cadence
 

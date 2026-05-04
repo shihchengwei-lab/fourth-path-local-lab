@@ -50,6 +50,7 @@ CAPABILITY_DEV_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v16_exact_format_following", "data/main_agent_v16_exact_format_following_seed_20260505.jsonl", 24, 6),
     ("v17_failure_label_repair", "data/main_agent_v17_failure_label_repair_seed_20260505.jsonl", 24, 6),
     ("v19_v18_failure_repair", "data/main_agent_v19_v18_failure_repair_seed_20260505.jsonl", 30, 6),
+    ("v20_v19_diagnostic_repair", "data/main_agent_v20_v19_diagnostic_repair_seed_20260505.jsonl", 30, 6),
 )
 CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v6_clean_capability_eval", "data/main_agent_v6_clean_capability_eval_seed_20260504.jsonl", 24, 4),
@@ -68,9 +69,9 @@ BOUNDARY_CLEAN_CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str], ...] = (
 )
 CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 19))
-NEXT_CAPABILITY_CLAIM_VERSION = "v20"
+NEXT_CAPABILITY_CLAIM_VERSION = "v21"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
-    "repair v19 diagnostic regressions, then mint a fresh unused v20 capability eval surface before any promotion claim"
+    "use v20 only as repair/dev evidence, then mint a fresh unused v21 capability eval surface before any promotion claim"
 )
 
 
