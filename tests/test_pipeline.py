@@ -3544,10 +3544,10 @@ class PipelineTests(unittest.TestCase):
         )
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][0], "v6")
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][-1], "v18")
-        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v19")
+        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v20")
         self.assertEqual(
             data["capability_claim_quality"]["next_required"],
-            "repair v18 regressions, then mint a fresh unused v19 capability eval surface before any promotion claim",
+            "repair v19 diagnostic regressions, then mint a fresh unused v20 capability eval surface before any promotion claim",
         )
         self.assertEqual(data["capability_claim_quality"]["total_records"], 102)
         self.assertEqual(data["capability_claim_quality"]["total_verifier_records"], 62)

@@ -30,6 +30,7 @@ from architecture_adversarial import (
     render_architecture_adversarial_check,
     validate_architecture_adversarial_record,
 )
+from architecture_eval import run_architecture_adversarial_eval_core
 from benchmark_runs import (
     BENCH_PROMPTS,
     render_benchmark_summary,
@@ -86,6 +87,7 @@ from distill_data import (
     render_distill_check,
     validate_distill_record,
 )
+from distill_eval import run_distill_eval_core
 from eval_analysis import (
     load_main_eval_failure_report,
     main_eval_failure_report_data,
@@ -93,6 +95,8 @@ from eval_analysis import (
     write_main_eval_failure_report,
 )
 from eval_reports import (
+    ArchitectureAdversarialEvalCase,
+    DistillEvalCase,
     MainEvalCase,
     architecture_adversarial_eval_case_dict,
     architecture_adversarial_eval_gate_errors,
@@ -430,49 +434,6 @@ class RunResult:
             "output": self.output,
             "audit": [entry.public_dict() for entry in self.audit],
         }
-
-
-@dataclass(frozen=True)
-class ArchitectureAdversarialEvalCase:
-    record_id: str
-    layer: str
-    passed: bool
-    duration_ms: int
-    issues: list[str]
-    expected_status: str | None
-    final_status: str | None
-    attempts: int
-    expected_verdict: str | None
-    expected_clause: str | None
-    predicted_verdict: str | None
-    predicted_clause: str | None
-    audit_source: str | None
-    main_call_count: int
-    output_chars: int
-    prompt_tokens: int
-    eval_tokens: int
-    prompt_eval_ms: int
-    eval_ms: int
-    load_ms: int
-
-
-@dataclass(frozen=True)
-class DistillEvalCase:
-    record_id: str
-    expected_verdict: str
-    expected_clause: str | None
-    predicted_verdict: str
-    predicted_clause: str | None
-    audit_source: str
-    verdict_match: bool
-    exact_match: bool
-    duration_ms: int
-    prompt_tokens: int
-    eval_tokens: int
-    prompt_eval_ms: int
-    eval_ms: int
-    load_ms: int
-
 
 class FakeClient:
     """Small test double used by unit tests."""
@@ -2260,179 +2221,18 @@ def run_architecture_adversarial_eval(
     records: list[ArchitectureAdversarialRecord],
     log_dir: Path,
 ) -> dict[str, Any]:
-    cases: list[ArchitectureAdversarialEvalCase] = []
-    started = time.perf_counter()
-
-    for record in records:
-        case_started = time.perf_counter()
-        if record.layer == "pipeline":
-            result = run_pipeline(
-                prompt=record.prompt or "",
-                client=client,
-                model=runtime.main.model,
-                canon=canon,
-                log_dir=log_dir,
-                runtime=runtime,
-            )
-            output_issues = [] if result.status != "pass" else main_candidate_issues(result.output)
-            audit_issues = [
-                entry.local_issue
-                for entry in result.audit
-                if entry.local_issue is not None
-            ]
-            expected_status = record.expected_status or "pass"
-            status_ok = (
-                result.status == expected_status
-                if expected_status in {"pass", "refused"}
-                else True
-            )
-            boundary_ok = not output_issues
-            passed = status_ok and boundary_ok
-            issues = list(dict.fromkeys([*output_issues, *audit_issues]))
-            if not status_ok:
-                issues.append("pipeline_status_mismatch")
-            cases.append(
-                ArchitectureAdversarialEvalCase(
-                    record_id=record.record_id,
-                    layer=record.layer,
-                    passed=passed,
-                    duration_ms=elapsed_ms(case_started),
-                    issues=issues,
-                    expected_status=expected_status,
-                    final_status=result.status,
-                    attempts=result.attempts,
-                    expected_verdict=None,
-                    expected_clause=None,
-                    predicted_verdict=None,
-                    predicted_clause=None,
-                    audit_source=None,
-                    main_call_count=sum(entry.main_call_count or 0 for entry in result.audit),
-                    output_chars=len(result.output),
-                    prompt_tokens=sum(
-                        (entry.main_prompt_tokens or 0) + (entry.audit_prompt_tokens or 0)
-                        for entry in result.audit
-                    ),
-                    eval_tokens=sum(
-                        (entry.main_eval_tokens or 0) + (entry.audit_eval_tokens or 0)
-                        for entry in result.audit
-                    ),
-                    prompt_eval_ms=sum(
-                        (entry.main_prompt_eval_ms or 0) + (entry.audit_prompt_eval_ms or 0)
-                        for entry in result.audit
-                    ),
-                    eval_ms=sum(
-                        (entry.main_eval_ms or 0) + (entry.audit_eval_ms or 0)
-                        for entry in result.audit
-                    ),
-                    load_ms=sum(
-                        (entry.main_load_ms or 0) + (entry.audit_load_ms or 0)
-                        for entry in result.audit
-                    ),
-                )
-            )
-            continue
-
-        if record.layer == "action":
-            verdict = audit_action_candidate(record.action)
-            passed = (
-                verdict.verdict == record.expected_verdict
-                and verdict.canon_clause == record.expected_clause
-            )
-            cases.append(
-                ArchitectureAdversarialEvalCase(
-                    record_id=record.record_id,
-                    layer=record.layer,
-                    passed=passed,
-                    duration_ms=elapsed_ms(case_started),
-                    issues=[] if passed else ["action_audit_mismatch"],
-                    expected_status=None,
-                    final_status=None,
-                    attempts=0,
-                    expected_verdict=record.expected_verdict,
-                    expected_clause=record.expected_clause,
-                    predicted_verdict=verdict.verdict,
-                    predicted_clause=verdict.canon_clause,
-                    audit_source=verdict.source,
-                    main_call_count=0,
-                    output_chars=0,
-                    prompt_tokens=0,
-                    eval_tokens=0,
-                    prompt_eval_ms=0,
-                    eval_ms=0,
-                    load_ms=0,
-                )
-            )
-            continue
-
-        verdict = cold_eyes_review(client, runtime.audit, canon, record.candidate or "")
-        stats = {} if verdict.source == "mechanical" else latest_call_stats(client)
-        passed = (
-            verdict.verdict == record.expected_verdict
-            and verdict.canon_clause == record.expected_clause
-        )
-        cases.append(
-            ArchitectureAdversarialEvalCase(
-                record_id=record.record_id,
-                layer=record.layer,
-                passed=passed,
-                duration_ms=elapsed_ms(case_started),
-                issues=[] if passed else ["cold_eyes_mismatch"],
-                expected_status=None,
-                final_status=None,
-                attempts=0,
-                expected_verdict=record.expected_verdict,
-                expected_clause=record.expected_clause,
-                predicted_verdict=verdict.verdict,
-                predicted_clause=verdict.canon_clause,
-                audit_source=verdict.source,
-                main_call_count=0,
-                output_chars=0,
-                prompt_tokens=stats.get("prompt_tokens", 0),
-                eval_tokens=stats.get("eval_tokens", 0),
-                prompt_eval_ms=stats.get("prompt_eval_ms", 0),
-                eval_ms=stats.get("eval_ms", 0),
-                load_ms=stats.get("load_ms", 0),
-            )
-        )
-
-    case_dicts = [architecture_adversarial_eval_case_dict(case) for case in cases]
-    total = len(cases)
-    passed_count = sum(case.passed for case in cases)
-    layer_counts = {"pipeline": 0, "cold_eyes": 0, "action": 0}
-    layer_passed = {"pipeline": 0, "cold_eyes": 0, "action": 0}
-    issue_counts = sorted_count_by(issue for case in cases for issue in case.issues)
-    audit_source_counts = sorted_count_by(case.audit_source for case in cases if case.audit_source is not None)
-    for case in cases:
-        layer_counts[case.layer] = layer_counts.get(case.layer, 0) + 1
-        if case.passed:
-            layer_passed[case.layer] = layer_passed.get(case.layer, 0) + 1
-
-    total_main_calls = sum(case.main_call_count for case in cases)
-    pipeline_cases = layer_counts.get("pipeline", 0)
-    cold_eyes_cases = layer_counts.get("cold_eyes", 0)
-    action_cases = layer_counts.get("action", 0)
-    return {
-        "profile": profile_dict("custom", runtime),
-        "total": total,
-        "passed": passed_count,
-        "failed": total - passed_count,
-        "pass_rate": passed_count / total if total else 0,
-        "layer_counts": layer_counts,
-        "layer_passed": layer_passed,
-        "pipeline_cases": pipeline_cases,
-        "cold_eyes_cases": cold_eyes_cases,
-        "action_cases": action_cases,
-        "issue_counts": issue_counts,
-        "audit_source_counts": audit_source_counts,
-        "total_main_calls": total_main_calls,
-        "average_main_calls_per_pipeline_case": safe_ratio(total_main_calls, pipeline_cases),
-        "passed_per_main_call": safe_ratio(passed_count, total_main_calls),
-        "total_eval_tokens": sum(case.eval_tokens for case in cases),
-        "total_pipeline_eval_tokens": sum(case.eval_tokens for case in cases if case.layer == "pipeline"),
-        "total_audit_eval_tokens": sum(case.eval_tokens for case in cases if case.layer == "cold_eyes"),
-        "total_duration_ms": elapsed_ms(started),
-        "cases": case_dicts,
-    }
+    return run_architecture_adversarial_eval_core(
+        client=client,
+        runtime=runtime,
+        canon=canon,
+        records=records,
+        log_dir=log_dir,
+        pipeline_runner=run_pipeline,
+        candidate_issues=main_candidate_issues,
+        cold_eyes_review=cold_eyes_review,
+        latest_call_stats=latest_call_stats,
+        profile=profile_dict("custom", runtime),
+    )
 
 
 
@@ -2518,88 +2318,15 @@ def run_distill_eval(
     canon: str,
     records: list[DistillRecord],
 ) -> dict[str, Any]:
-    cases: list[DistillEvalCase] = []
-    started = time.perf_counter()
-    for record in records:
-        case_started = time.perf_counter()
-        verdict = cold_eyes_review(client, runtime, canon, record.candidate)
-        stats = {} if verdict.source == "mechanical" else latest_call_stats(client)
-        verdict_match = verdict.verdict == record.verdict
-        exact_match = verdict_match and verdict.canon_clause == record.canon_clause
-        cases.append(
-            DistillEvalCase(
-                record_id=record.record_id,
-                expected_verdict=record.verdict,
-                expected_clause=record.canon_clause,
-                predicted_verdict=verdict.verdict,
-                predicted_clause=verdict.canon_clause,
-                audit_source=verdict.source,
-                verdict_match=verdict_match,
-                exact_match=exact_match,
-                duration_ms=elapsed_ms(case_started),
-                prompt_tokens=stats.get("prompt_tokens", 0),
-                eval_tokens=stats.get("eval_tokens", 0),
-                prompt_eval_ms=stats.get("prompt_eval_ms", 0),
-                eval_ms=stats.get("eval_ms", 0),
-                load_ms=stats.get("load_ms", 0),
-            )
-        )
-
-    case_dicts = [distill_eval_case_dict(case) for case in cases]
-    verdict_matches = sum(case.verdict_match for case in cases)
-    exact_matches = sum(case.exact_match for case in cases)
-    total = len(cases)
-    mechanical_cases = sum(case.audit_source == "mechanical" for case in cases)
-    mismatches = [
-        {
-            "id": case.record_id,
-            "expected_verdict": case.expected_verdict,
-            "expected_clause": case.expected_clause,
-            "predicted_verdict": case.predicted_verdict,
-            "predicted_clause": case.predicted_clause,
-            "verdict_match": case.verdict_match,
-        }
-        for case in cases
-        if not case.exact_match
-    ]
-    mismatch_counts_by_expected_clause = {"pass": 0, "C1": 0, "C2": 0, "C3": 0}
-    source_counts_by_expected_clause = {
-        "pass": {"mechanical": 0, "llm": 0, "cache": 0},
-        "C1": {"mechanical": 0, "llm": 0, "cache": 0},
-        "C2": {"mechanical": 0, "llm": 0, "cache": 0},
-        "C3": {"mechanical": 0, "llm": 0, "cache": 0},
-    }
-    for case in cases:
-        key = case.expected_clause or "pass"
-        if case.audit_source.endswith("_cache"):
-            source_counts_by_expected_clause[key]["cache"] += 1
-        elif case.audit_source == "mechanical":
-            source_counts_by_expected_clause[key]["mechanical"] += 1
-        else:
-            source_counts_by_expected_clause[key]["llm"] += 1
-        if not case.exact_match:
-            mismatch_counts_by_expected_clause[key] += 1
-    return {
-        "audit_model": runtime.model,
-        "audit_options": runtime.options.payload(),
-        "audit_no_think": runtime.no_think,
-        "audit_response_format": response_format_label(runtime.response_format),
-        "total": total,
-        "verdict_matches": verdict_matches,
-        "exact_matches": exact_matches,
-        "partial_matches": verdict_matches - exact_matches,
-        "verdict_misses": total - verdict_matches,
-        "mechanical_cases": mechanical_cases,
-        "llm_cases": total - mechanical_cases,
-        "estimated_llm_audit_calls_saved": mechanical_cases,
-        "mismatches": mismatches,
-        "mismatch_counts_by_expected_clause": mismatch_counts_by_expected_clause,
-        "source_counts_by_expected_clause": source_counts_by_expected_clause,
-        "verdict_accuracy": verdict_matches / total if total else 0,
-        "exact_accuracy": exact_matches / total if total else 0,
-        "total_duration_ms": elapsed_ms(started),
-        "cases": case_dicts,
-    }
+    return run_distill_eval_core(
+        client=client,
+        runtime=runtime,
+        canon=canon,
+        records=records,
+        cold_eyes_review=cold_eyes_review,
+        latest_call_stats=latest_call_stats,
+        response_format_label=response_format_label,
+    )
 
 
 

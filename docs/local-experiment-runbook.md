@@ -783,7 +783,7 @@ gate: hold
 
 Do not promote v17 from v18. If the v18 failures are used for repair, this
 surface becomes diagnostic evidence; the next clean claim needs a fresh unused
-v19 surface.
+surface.
 
 ## v19 v18-Failure Repair Seed
 
@@ -804,6 +804,50 @@ clean_claim_eligible false
 
 It targets v18 failure labels without copying v18 prompts as training rows. It
 is train/dev material only, not clean capability evidence.
+
+v19 adapter result:
+
+```text
+training input: runs/main-agent-v16-v17-v19-repair-sft-20260505.jsonl
+rows: 88
+resume: runs/qwen3-8b-main-agent-v17-failure-label-lora-20260505
+adapter: runs/qwen3-8b-main-agent-v19-v18-failure-repair-lora-20260505
+optimizer steps: 30
+micro steps: 120
+duration: about 747s
+
+v19 train surface: 28/30 clean
+spent v18 eval: 23/25 clean
+v17 -> v19 on v18: clean_delta +5, fixed 6, regressed 1
+regression: v18-clean-planning-003
+persistent: v18-clean-safe-002
+containment: 12/12 contained, containment_issue_counts {}
+gate: hold
+```
+
+Do not promote v19 from this result. The v18 surface was already used for
+repair diagnosis, and the gate held because one same-surface regression remains.
+The next clean claim must use a fresh unused v20 surface after the next repair
+or prompt change.
+
+## Main.py Refactor Cadence
+
+Keep `main.py` as orchestration, not the owner of every implementation detail.
+When a command grows a long self-contained loop, move the loop into a focused
+module and leave a small wrapper in `main.py` for dependency injection and test
+compatibility.
+
+Recent completed extractions:
+
+```text
+chat_runtime.py owns chat prompt/history/render/loop helpers.
+architecture_eval.py owns architecture adversarial eval execution.
+distill_eval.py owns distill eval execution.
+eval_reports.py owns eval report dataclasses and render/summary helpers.
+```
+
+For each extraction, run targeted tests for the moved command, then full unit
+tests and the local release gate before pushing.
 
 ## Cold Eyes Distillation
 

@@ -388,8 +388,8 @@ contained with empty containment issue counts.
 
 Fresh eval gate result: `hold`, because regressions are not allowed. Do not
 promote v17 from v18. If the v18 failure labels drive the next repair, v18 is
-spent diagnostic evidence and the next clean claim surface must be a fresh
-unused v19 surface.
+spent diagnostic evidence and the next clean claim surface must be fresh and
+unused.
 
 ## 2026-05-05 v19 v18-Failure Repair Seed
 
@@ -409,6 +409,49 @@ training rows:
   `clean_claim_eligible=false`
 
 This seed is train/dev material only. It is not clean capability evidence.
+
+The v19 adapter was trained from v17 on the merged v16/v17/v19 repair SFT
+input:
+
+- input: `runs/main-agent-v16-v17-v19-repair-sft-20260505.jsonl`
+- rows: 88
+- resume: `runs/qwen3-8b-main-agent-v17-failure-label-lora-20260505`
+- output:
+  `runs/qwen3-8b-main-agent-v19-v18-failure-repair-lora-20260505`
+- optimizer steps: 30
+- micro steps: 120
+- duration: about 747 seconds on the RTX 4060 Laptop GPU
+
+The loss movement is training sanity only. It is not capability evidence.
+
+Measured no-thinking evals:
+
+| Run | Surface | Clean |
+|---|---:|---:|
+| v19 adapter | v19 train surface | 28/30 |
+| v19 adapter | spent v18 clean capability eval | 23/25 |
+| v19 adapter | adapter containment seed | 2/12 candidate-clean, 12/12 contained |
+
+Comparison against v17 on the same spent v18 eval:
+
+- clean delta: +5
+- fixed: 6 cases
+- regressed: `v18-clean-planning-003`
+- persistent failure: `v18-clean-safe-002`
+
+Fresh eval gate result:
+
+```text
+verdict: hold
+reason: regressed_cases=1, allow_regressions=False
+containment: 12/12 contained, containment_issue_counts {}
+```
+
+Conclusion: v19 is a strong diagnostic improvement over v17 on the v18 repair
+surface, and the external safety layer still held. It is still not promotable:
+v18 is spent diagnostic evidence and v19 introduced one same-surface regression.
+Repair that regression separately, then mint a fresh unused v20 clean surface
+before making a new capability claim.
 
 ## Repository Boundary
 

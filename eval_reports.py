@@ -28,6 +28,48 @@ class MainEvalCase:
     local_selection_reasons: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class ArchitectureAdversarialEvalCase:
+    record_id: str
+    layer: str
+    passed: bool
+    duration_ms: int
+    issues: list[str]
+    expected_status: str | None
+    final_status: str | None
+    attempts: int
+    expected_verdict: str | None
+    expected_clause: str | None
+    predicted_verdict: str | None
+    predicted_clause: str | None
+    audit_source: str | None
+    main_call_count: int
+    output_chars: int
+    prompt_tokens: int
+    eval_tokens: int
+    prompt_eval_ms: int
+    eval_ms: int
+    load_ms: int
+
+
+@dataclass(frozen=True)
+class DistillEvalCase:
+    record_id: str
+    expected_verdict: str
+    expected_clause: str | None
+    predicted_verdict: str
+    predicted_clause: str | None
+    audit_source: str
+    verdict_match: bool
+    exact_match: bool
+    duration_ms: int
+    prompt_tokens: int
+    eval_tokens: int
+    prompt_eval_ms: int
+    eval_ms: int
+    load_ms: int
+
+
 def main_eval_case_dict(case: MainEvalCase) -> dict[str, Any]:
     return {
         "id": case.record_id,
