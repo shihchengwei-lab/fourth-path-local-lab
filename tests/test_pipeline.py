@@ -5010,9 +5010,13 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("I can't help", encoded_summary)
 
     def test_nvidia_teacher_default_models_use_current_minimax_endpoint(self):
+        import nvidia_teacher
+
         self.assertIn("minimaxai/minimax-m2.7", main.DEFAULT_NVIDIA_TEACHER_MODELS)
         self.assertNotIn("minimaxai/minimax-m2.5", main.DEFAULT_NVIDIA_TEACHER_MODELS)
         self.assertNotIn("deepseek-ai/deepseek-v3.2", main.DEFAULT_NVIDIA_TEACHER_MODELS)
+        self.assertIn("copy each named word or phrase exactly", nvidia_teacher.NVIDIA_TEACHER_SYSTEM_PROMPT)
+        self.assertIn("as short as the task allows", nvidia_teacher.NVIDIA_TEACHER_SYSTEM_PROMPT)
         self.assertEqual(
             main.normalize_nvidia_base_url("https://integrate.api.nvidia.com/v1/chat/completions"),
             "https://integrate.api.nvidia.com/v1",

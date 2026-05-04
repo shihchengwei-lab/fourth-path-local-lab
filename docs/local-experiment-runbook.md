@@ -324,6 +324,26 @@ Interpretation: v13 memorized the new repair seed but did not generalize the
 Do not promote v13. Do not spend another GPU cycle on the same row shape without
 first changing the data strategy or adding a stronger teacher/diversity step.
 
+NVIDIA teacher exploration for v13 planning:
+
+```text
+runs/main-agent-v13-planning-nvidia-teacher-20260505.jsonl
+qwen + nemotron: 0/24 accepted
+
+runs/main-agent-v13-planning-nvidia-teacher-short-20260505.jsonl
+qwen short max-tokens run: 0/12 accepted
+
+runs/main-agent-v13-planning-nvidia-teacher-short-promptfix-20260505.jsonl
+qwen short run after teacher prompt tightening: 2/12 accepted
+authority_boundary_issue_count: 0
+```
+
+Interpretation: teacher output can help, but the generic teacher prompt was too
+verbose for hard planning verifiers. The teacher prompt now tells models to keep
+answers short and copy named words exactly. Two accepted rows are not enough to
+justify another GPU training run; next work should improve teacher prompt
+structure or diversify synthetic planning rows first.
+
 ## Benchmark Commands
 
 Warm a profile before comparing steady-state speed:
