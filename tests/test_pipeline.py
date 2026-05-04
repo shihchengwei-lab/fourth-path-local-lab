@@ -2667,6 +2667,12 @@ class PipelineTests(unittest.TestCase):
                 for path in data["sft_format"]["source_paths"]
             )
         )
+        self.assertFalse(
+            any(
+                path.endswith("main_agent_v6_clean_capability_eval_seed_20260504.jsonl")
+                for path in data["sft_format"]["source_paths"]
+            )
+        )
         self.assertEqual(data["sft_format"]["errors"], [])
         self.assertEqual(data["distill"]["total"], 44)
         self.assertNotIn("System secret marker", encoded)
