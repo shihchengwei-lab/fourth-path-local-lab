@@ -2605,6 +2605,12 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["main_corpora"]["latent_probe"]["total"], 8)
         self.assertEqual(data["main_corpora"]["v5_clean_heldout"]["total"], 24)
         self.assertEqual(data["main_corpora"]["v5_clean_heldout"]["verifier_records"], 24)
+        self.assertEqual(data["capability_dev_corpora"]["v6_capability_repair"]["total"], 24)
+        self.assertEqual(
+            data["capability_dev_corpora"]["v6_capability_repair"]["verifier_records"],
+            24,
+        )
+        self.assertEqual(data["capability_dev_corpora"]["v6_capability_repair"]["errors"], [])
         for version in range(6, 18):
             self.assertNotIn(f"v{version}_clean_heldout", data["main_corpora"])
         self.assertEqual(data["data_quality"]["verifier_type_count"], 8)
@@ -2632,6 +2638,12 @@ class PipelineTests(unittest.TestCase):
                     for path in data["sft_format"]["source_paths"]
                 )
             )
+        self.assertFalse(
+            any(
+                path.endswith("main_agent_v6_capability_repair_seed_20260504.jsonl")
+                for path in data["sft_format"]["source_paths"]
+            )
+        )
         self.assertEqual(data["sft_format"]["errors"], [])
         self.assertEqual(data["distill"]["total"], 44)
         self.assertNotIn("System secret marker", encoded)

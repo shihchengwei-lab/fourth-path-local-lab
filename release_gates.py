@@ -37,6 +37,9 @@ MAIN_RELEASE_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("fresh_heldout", "data/main_agent_fresh_heldout_seed.jsonl", 12, 2),
     ("latent_probe", "data/main_agent_latent_probe_seed.jsonl", 8, 2),
 )
+CAPABILITY_DEV_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
+    ("v6_capability_repair", "data/main_agent_v6_capability_repair_seed_20260504.jsonl", 24, 4),
+)
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 18))
 NEXT_CAPABILITY_CLAIM_VERSION = "v6"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
@@ -358,6 +361,17 @@ def main_release_corpus_checks(project_root: Path) -> dict[str, Any]:
     }
 
 
+def capability_dev_corpus_checks(project_root: Path) -> dict[str, Any]:
+    return {
+        key: apply_main_agent_requirements(
+            check_main_agent_corpus(project_root / relative_path),
+            min_total=min_total,
+            min_category=min_category,
+        )
+        for key, relative_path, min_total, min_category in CAPABILITY_DEV_CORPUS_SPECS
+    }
+
+
 def main_data_quality_summary(quality: dict[str, Any]) -> dict[str, Any]:
     return {
         "total_records": quality["total_records"],
@@ -391,6 +405,7 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
     overblocking = config.overblocking_gate_data()
     architecture_pressures = architecture_pressure_checks(config.project_root)
     main_corpus_checks = main_release_corpus_checks(config.project_root)
+    capability_dev_checks = capability_dev_corpus_checks(config.project_root)
     clean_heldout_checks, clean_heldout_paths = legacy_clean_heldout_checks(config.project_root)
     data_quality = config.main_data_quality_check_data(list(config.main_data_quality_files))
     sft_format = config.sft_export_format_gate_data(list(config.main_data_quality_files))
@@ -412,6 +427,8 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
         errors.extend(prefixed_errors(f"main_{key}", check.errors))
     for key, check in main_corpus_checks.items():
         errors.extend(prefixed_errors(f"main_{key}", check.errors))
+    for key, check in capability_dev_checks.items():
+        errors.extend(prefixed_errors(f"capability_dev_{key}", check.errors))
     errors.extend(prefixed_errors("data_quality", data_quality["errors"]))
     errors.extend(prefixed_errors("capability_claim_quality", data_quality["errors"]))
     errors.extend(prefixed_errors("sft_format", sft_format["errors"]))
@@ -430,6 +447,9 @@ def local_release_gate_data(distill_path: Path, config: LocalReleaseGateConfig) 
         "main_corpora": {
             **{key: check.public_dict() for key, check in main_corpus_checks.items()},
             **{key: check.public_dict() for key, check in clean_heldout_checks.items()},
+        },
+        "capability_dev_corpora": {
+            key: check.public_dict() for key, check in capability_dev_checks.items()
         },
         "data_quality": main_data_quality_summary(data_quality),
         "capability_claim_quality": capability_claim_quality_summary(
@@ -457,6 +477,10 @@ def render_local_release_gate(data: dict[str, Any]) -> str:
     clean_heldout_summary = ", ".join(
         f"{key.replace('_heldout', '')}={data['main_corpora'][key]['total']}"
         for key in clean_heldout_keys
+    )
+    capability_dev_summary = ", ".join(
+        f"{key}={corpus['total']}"
+        for key, corpus in sorted(data.get("capability_dev_corpora", {}).items())
     )
     lines = [
         f"Local release gate: {status}",
@@ -503,6 +527,7 @@ def render_local_release_gate(data: dict[str, Any]) -> str:
             fresh=data["main_corpora"]["fresh_heldout"]["total"],
             latent_probe=data["main_corpora"]["latent_probe"]["total"],
         ),
+        f"Capability dev corpora: {capability_dev_summary}",
         f"Legacy clean heldout files (not evidence): {clean_heldout_summary}",
         "Withdrawn clean heldout files: old v6-v17 removed",
         "Capability evidence: no current clean claim surface; next proof restarts at v6",

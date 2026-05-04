@@ -16,8 +16,9 @@ git diff --check
 ```
 
 `local-release-gate` is a no-Ollama preflight. It checks data quality,
-architecture seed readiness, over-blocking smoke coverage, distillation format,
-verifier/tool-use readiness, and inference-compute readiness.
+architecture seed readiness, capability dev-corpus readiness, over-blocking
+smoke coverage, distillation format, verifier/tool-use readiness, and
+inference-compute readiness.
 
 ## Round Rule
 
@@ -141,6 +142,10 @@ python main.py main-check --input-file data\main_agent_v6_clean_capability_eval_
 python main.py main-eval --profile qwen3-8b-s2t-lite --input-file data\main_agent_v6_clean_capability_eval_seed_20260504.jsonl --json --timeout 900 --max-length-ratio 4
 python main.py main-check --input-file data\main_agent_v6_capability_repair_seed_20260504.jsonl --min-total 24 --min-category 4 --json
 ```
+
+`local-release-gate` checks the v6 repair seed as a capability dev corpus. This
+keeps the tracked repair lane valid without treating it as clean evidence or
+adding it to the default SFT export set.
 
 `local-release-gate` now reports no current clean claim surface, keeps only
 legacy `v5` as non-evidence context, and records old `v6-v17` as withdrawn. A
