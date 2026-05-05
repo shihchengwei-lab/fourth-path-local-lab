@@ -7,7 +7,7 @@ param(
     [string]$RawModel = "qwen3:8b",
     [string]$SplitProfile = "qwen3-8b-local-max",
     [string]$HfModel = "Qwen/Qwen3-8B",
-    [string]$AdapterDir = "",
+    [string]$AdapterDir = "runs\qwen3-8b-main-agent-v19-v18-failure-repair-lora-20260505",
     [int]$Port = 8010,
     [string]$Python = ".\.venv-bench\Scripts\python.exe",
     [string]$AdapterPython = ".\.venv-lora\Scripts\python.exe",
@@ -73,16 +73,7 @@ function Resolve-AdapterDirectory {
         return $explicit
     }
 
-    $runs = Join-Path $repo "runs"
-    $latest = Get-ChildItem -Path $runs -Directory -ErrorAction SilentlyContinue |
-        Where-Object { Test-Path (Join-Path $_.FullName "adapter_config.json") } |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-
-    if ($null -eq $latest) {
-        throw "No adapter directory found under runs. Pass -AdapterDir for A2/A3."
-    }
-    return $latest.FullName
+    throw "AdapterDir is required for A2/A3. The default is the best local candidate, not the newest adapter."
 }
 
 function Invoke-LmEvalRun {

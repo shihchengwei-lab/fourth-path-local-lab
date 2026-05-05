@@ -20,6 +20,14 @@ plus the split boundary. Profiles with local selection, search, or refinement
 add extra model calls and are useful later, but they mix another architecture
 change into the A0-A3 closure matrix.
 
+Default adapter: `runs\qwen3-8b-main-agent-v19-v18-failure-repair-lora-20260505`.
+
+Reason: the final local convergence notes identify the best current path as the
+v19 adapter plus the current runtime hint layer. The newer v22 adapter is a
+diagnostic artifact, not the selected adapter for closure. A3 gets the runtime
+hint through the current split pipeline; A2 remains a raw direct adapter call by
+design.
+
 ## Runner
 
 Primary runner: EleutherAI `lm-evaluation-harness` with
@@ -43,7 +51,7 @@ Important parameters:
 -RawModel       Ollama raw model name. Default: qwen3:8b
 -SplitProfile   Fourth Path split profile. Default: qwen3-8b-local-max
 -HfModel        Hugging Face base model for adapter runs. Default: Qwen/Qwen3-8B
--AdapterDir     PEFT adapter directory. Default: latest runs\*\adapter_config.json
+-AdapterDir     PEFT adapter directory. Default: runs\qwen3-8b-main-agent-v19-v18-failure-repair-lora-20260505
 -Python         benchmark venv Python. Default: .\.venv-bench\Scripts\python.exe
 -AdapterPython  LoRA/transformers venv Python. Default: .\.venv-lora\Scripts\python.exe
 ```
