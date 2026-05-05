@@ -3512,13 +3512,16 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["capability_dev_corpora"]["v20_v19_diagnostic_repair"]["total"], 30)
         self.assertEqual(data["capability_dev_corpora"]["v20_v19_diagnostic_repair"]["verifier_records"], 30)
         self.assertEqual(data["capability_dev_corpora"]["v20_v19_diagnostic_repair"]["errors"], [])
-        self.assertEqual(data["capability_dev_provenance"]["total_records"], 276)
-        self.assertEqual(data["capability_dev_provenance"]["split_counts"], {"train_seed": 276})
+        self.assertEqual(data["capability_dev_corpora"]["v22_literal_format_repair"]["total"], 30)
+        self.assertEqual(data["capability_dev_corpora"]["v22_literal_format_repair"]["verifier_records"], 30)
+        self.assertEqual(data["capability_dev_corpora"]["v22_literal_format_repair"]["errors"], [])
+        self.assertEqual(data["capability_dev_provenance"]["total_records"], 306)
+        self.assertEqual(data["capability_dev_provenance"]["split_counts"], {"train_seed": 306})
         self.assertEqual(
             data["capability_dev_provenance"]["evidence_level_counts"],
-            {"train_seed_not_capability_evidence": 276},
+            {"train_seed_not_capability_evidence": 306},
         )
-        self.assertEqual(data["capability_dev_provenance"]["clean_claim_eligible_counts"], {"false": 276})
+        self.assertEqual(data["capability_dev_provenance"]["clean_claim_eligible_counts"], {"false": 306})
         self.assertEqual(data["capability_dev_provenance"]["errors"], [])
         self.assertEqual(data["capability_eval_corpora"]["v6_clean_capability_eval"]["total"], 24)
         self.assertEqual(data["capability_eval_corpora"]["v8_clean_capability_eval"]["total"], 24)
@@ -3636,6 +3639,12 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(
             any(
                 path.endswith("main_agent_v20_v19_diagnostic_repair_seed_20260505.jsonl")
+                for path in data["sft_format"]["source_paths"]
+            )
+        )
+        self.assertFalse(
+            any(
+                path.endswith("main_agent_v22_literal_format_repair_seed_20260505.jsonl")
                 for path in data["sft_format"]["source_paths"]
             )
         )
@@ -4953,6 +4962,59 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(repair.categories["v20_capability_one_line_terms"], 6)
         self.assertEqual(repair.categories["v20_capability_short_keyvalue_pattern"], 6)
         self.assertTrue(all(row["source"] == "codex_v19_diagnostic_failure_label_analysis" for row in rows))
+        self.assertTrue(all(row["split"] == "train_seed" for row in rows))
+        self.assertTrue(all(row["evidence_level"] == "train_seed_not_capability_evidence" for row in rows))
+        self.assertTrue(all(row["clean_claim_eligible"] is False for row in rows))
+        self.assertEqual(verifier_failures, {})
+        self.assertEqual(boundary_failures, {})
+        self.assertFalse(any(record.prompt in known_prompts for record in repair_records))
+
+    def test_main_agent_v22_literal_format_repair_seed_is_valid_separate_and_boundary_clean(self):
+        from training_boundaries import capability_dev_authority_overlap_issues
+
+        path = main.PROJECT_ROOT / "data" / "main_agent_v22_literal_format_repair_seed_20260505.jsonl"
+        repair = main.check_main_agent_corpus(path)
+        source_paths = [
+            source_path
+            for source_path in (main.PROJECT_ROOT / "data").glob("main_agent_*.jsonl")
+            if source_path != path
+        ]
+        known_records = []
+        for source_path in source_paths:
+            records, _, _ = main.load_main_agent_records(source_path)
+            known_records.extend(records)
+        known_prompts = {record.prompt for record in known_records}
+        repair_records, _, _ = main.load_main_agent_records(path)
+        verifier_failures = {
+            record.record_id: main.main_verifier_issues(record.target_response, record.verifier)
+            for record in repair_records
+            if main.main_verifier_issues(record.target_response, record.verifier)
+        }
+        boundary_failures = {
+            record.record_id: capability_dev_authority_overlap_issues(
+                {"prompt": record.prompt, "target_response": record.target_response}
+            )
+            for record in repair_records
+            if capability_dev_authority_overlap_issues(
+                {"prompt": record.prompt, "target_response": record.target_response}
+            )
+        }
+        rows = [
+            json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+        self.assertEqual(repair.errors, [])
+        self.assertEqual(repair.total, 30)
+        self.assertEqual(repair.verifier_records, 30)
+        self.assertEqual(repair.categories["v22_capability_literal_terms_one_line"], 5)
+        self.assertEqual(repair.categories["v22_capability_keyvalue_exact_copy"], 5)
+        self.assertEqual(repair.categories["v22_capability_two_bullet_exact_copy"], 5)
+        self.assertEqual(repair.categories["v22_capability_safe_token_literal_actions"], 5)
+        self.assertEqual(repair.categories["v22_capability_numbered_phrase_limit"], 5)
+        self.assertEqual(repair.categories["v22_capability_json_shape_literal"], 5)
+        self.assertTrue(all(row["source"] == "codex_v20_negative_result_analysis" for row in rows))
         self.assertTrue(all(row["split"] == "train_seed" for row in rows))
         self.assertTrue(all(row["evidence_level"] == "train_seed_not_capability_evidence" for row in rows))
         self.assertTrue(all(row["clean_claim_eligible"] is False for row in rows))

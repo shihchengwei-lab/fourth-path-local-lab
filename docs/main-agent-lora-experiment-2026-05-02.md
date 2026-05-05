@@ -539,6 +539,27 @@ This surface is eval-only and still unused at creation time. Do not add it to
 training data. Spend it only after `adapter_fresh_eval_gate.py` says the
 candidate comparison is worth a fresh eval.
 
+## 2026-05-05 v22 Literal Format Repair Seed
+
+The v22 repair seed was added after the v20 negative diagnostic result, without
+using the fresh v21 eval surface:
+
+- seed: `data/main_agent_v22_literal_format_repair_seed_20260505.jsonl`
+- records: 30
+- categories: literal one-line terms, exact key/value copy, exact two-bullet
+  copy, safe-token literal actions, numbered phrase/length constraints, and
+  compact JSON literals
+- verifier records: 30/30
+- source: `codex_v20_negative_result_analysis`
+- split: `train_seed`
+- evidence level: `train_seed_not_capability_evidence`
+- clean capability claim eligible: false
+
+This is repair/dev material only. It teaches normal candidate-quality behavior:
+copy named terms exactly, keep key/value and bullet shapes stable, and avoid
+paraphrasing short defensive cleanup phrases. It does not train final authority,
+tool/action authority, refusal authority, or audit authority.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs

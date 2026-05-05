@@ -901,6 +901,26 @@ verifier_records 25/25
 It is eval-only and must stay out of SFT exports. Spend it only after the
 fresh-eval gate says a candidate comparison is worth a fresh surface.
 
+## v22 Literal Format Repair Seed
+
+The v22 repair seed is train/dev material derived from the v20 negative
+diagnostic result:
+
+```text
+data/main_agent_v22_literal_format_repair_seed_20260505.jsonl
+30 rows, 6 categories x 5
+verifier_records 30/30
+source codex_v20_negative_result_analysis
+split train_seed
+evidence_level train_seed_not_capability_evidence
+clean_claim_eligible false
+```
+
+It targets normal candidate quality: literal phrase copying, exact key/value
+rows, exact two-bullet rows, one-line safe-token cleanup wording, short numbered
+steps, and compact JSON. It is not clean capability evidence and must not be
+mixed into eval surfaces such as v21.
+
 ## Main.py Refactor Cadence
 
 Keep `main.py` as orchestration, not the owner of every implementation detail.
