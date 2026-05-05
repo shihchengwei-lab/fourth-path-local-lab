@@ -272,10 +272,17 @@ def main_prompt_distillation_hints(user_prompt: str) -> list[str]:
         hints.append("For state-the-next-action prompts, return one sentence on one line, not numbered steps or bullets.")
         hints.append("Copy each required included phrase exactly; do not replace it with a synonym.")
     if "include" in lower and (
-        "numbered step" in lower or "checklist" in lower or "list" in lower or "bullet" in lower
+        "numbered step" in lower
+        or "step plan" in lower
+        or "three-step" in lower
+        or "two-step" in lower
+        or "checklist" in lower
+        or "list" in lower
+        or "bullet" in lower
     ):
-        hints.append("Copy each included phrase exactly, preserving word order and singular or plural form.")
+        hints.append("Copy each included phrase exactly, preserving capitalization, word order, and singular or plural form.")
         hints.append("Keep list items short so every required included phrase fits.")
+        hints.append("Do the requested task; do not answer with these instruction words.")
     if "three-step plan" in lower and "include" in lower and "compare" in lower:
         hints.append("For three-step plans with required terms, copy each included phrase exactly.")
         hints.append("Keep each numbered step short enough to fit the character limit.")
@@ -283,8 +290,17 @@ def main_prompt_distillation_hints(user_prompt: str) -> list[str]:
         hints.append("Use exactly three '- ' lines and keep each line under eight words.")
         hints.append("Keep the total answer under 220 characters.")
     if re.search(r"\bexactly\s+two\b", lower) and "sentence" in lower:
-        hints.append("Output exactly two sentences: include save or reduce first, then defer uncertain cases to an LLM judge.")
-        hints.append("Keep the two-sentence answer under 240 characters.")
+        if "local audit saves model calls" in lower and "miss context" in lower:
+            hints.append("Output exactly two sentences: include save or reduce first, then defer uncertain cases to an LLM judge.")
+            hints.append("Keep the two-sentence answer under 240 characters.")
+        elif "include" in lower:
+            hints.append("Output exactly two short sentences and copy every included phrase exactly, including capitalization.")
+            hints.append("Do not add a third idea; stay within the requested length.")
+        else:
+            hints.append("Output exactly two concise sentences and do not add bullets or extra lines.")
+    if ("one sentence" in lower or "one-line" in lower or "exactly one line" in lower) and "include" in lower:
+        hints.append("For one-sentence include prompts, copy each included phrase exactly, including capitalization; do not use synonyms or reorder words.")
+        hints.append("Keep the sentence short and do not add extra actions beyond the prompt.")
     if "slm-mux" in lower:
         hints.append("Keep under 320 characters while mentioning independent samples, verifier scoring, union coverage, and contradiction checks.")
     if "lora" in lower and ("worth" in lower or "train" in lower):

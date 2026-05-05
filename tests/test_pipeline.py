@@ -1097,6 +1097,18 @@ class PipelineTests(unittest.TestCase):
             "Summarize.",
             "Summarize the tradeoff in exactly two sentences: local audit saves model calls but can miss context.",
         )
+        exact_two_include = main.augment_main_user_prompt(
+            "Answer.",
+            "Write exactly two short sentences. Include Term copy and Small rows.",
+        )
+        step_include = main.augment_main_user_prompt(
+            "Plan.",
+            "Give a three-step plan to improve phrase handling. Include term copy, short rows, and unused surface.",
+        )
+        one_sentence_include = main.augment_main_user_prompt(
+            "Answer.",
+            "A password reset email went to the wrong person. Write one sentence. Include expire link and notify owner.",
+        )
         three_bullets = main.augment_main_user_prompt(
             "Plan.",
             "Return exactly three bullet lines. Each line must start with '- '. Topic: fair local model benchmarking.",
@@ -1267,6 +1279,16 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("answer N+1", gsm8k)
         self.assertIn("LLM judge", tradeoff)
         self.assertIn("under 240 characters", tradeoff)
+        self.assertIn("two short sentences", exact_two_include)
+        self.assertIn("copy every included phrase exactly", exact_two_include)
+        self.assertIn("including capitalization", exact_two_include)
+        self.assertNotIn("LLM judge", exact_two_include)
+        self.assertIn("Copy each included phrase exactly", step_include)
+        self.assertIn("preserving capitalization", step_include)
+        self.assertIn("do not answer with these instruction words", step_include)
+        self.assertIn("one-sentence include prompts", one_sentence_include)
+        self.assertIn("including capitalization", one_sentence_include)
+        self.assertIn("do not use synonyms", one_sentence_include)
         self.assertIn("under eight words", three_bullets)
         self.assertIn("under 220 characters", three_bullets)
         self.assertIn("union coverage", mux)
@@ -1335,7 +1357,7 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("Copy each required included phrase exactly", state_next_action)
         self.assertIn("copy each included phrase exactly", required_plan)
         self.assertIn("fit the character limit", required_plan)
-        self.assertIn("preserving word order", numbered_terms)
+        self.assertIn("preserving capitalization", numbered_terms)
         self.assertIn("singular or plural form", numbered_terms)
         self.assertIn("one sentence on one line", one_line_plan)
         self.assertIn("not numbered steps or bullet lines", one_line_plan)
@@ -3552,10 +3574,10 @@ class PipelineTests(unittest.TestCase):
         )
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][0], "v6")
         self.assertEqual(data["capability_claim_quality"]["withdrawn_surfaces"][-1], "v18")
-        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v21")
+        self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v25")
         self.assertEqual(
             data["capability_claim_quality"]["next_required"],
-            "v21 is the fresh unused clean capability eval surface; spend it only after the fresh-eval gate passes",
+            "v21 has been spent as the final selection surface; future clean capability claims need a fresh unused v25-or-later eval surface after a new repair and fresh-eval gate",
         )
         self.assertEqual(data["capability_claim_quality"]["total_records"], 102)
         self.assertEqual(data["capability_claim_quality"]["total_verifier_records"], 62)
@@ -3668,7 +3690,7 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("Capability claim quality:", rendered)
         self.assertIn("Capability eval corpora:", rendered)
         self.assertIn("Withdrawn clean claim surfaces: v6-v18", rendered)
-        self.assertIn("Next clean capability claim: v21", rendered)
+        self.assertIn("Next clean capability claim: v25", rendered)
         self.assertNotIn("next proof starts at v9", rendered)
         self.assertNotIn("Capability dev-lane quality:", rendered)
 

@@ -948,6 +948,36 @@ Do not spend v21 on v22. It is healthier than v20 on its own repair surface,
 but it is still worse than v19 on the spent v18 comparison and introduces
 regressions.
 
+Later runtime-hint repair changed the spend decision without adding a new LoRA
+round. The v24 hint tightened normal task-following for included phrases,
+capitalization, short lists, and exact one/two-sentence shapes.
+
+v24 gate evidence before spending v21:
+
+```text
+v19 + v24 hint on spent v18: 22/25 clean
+v22 + v24 hint on spent v18: 24/25 clean
+v19 -> v22 on spent v18: clean_delta +2, fixed 2, regressed 0
+v22 train surface with v24 hint: 27/30 clean
+containment: candidate clean 2/12, contained 12/12, containment_issue_counts {}
+fresh eval gate: spend_fresh_eval
+```
+
+v25 final selection used v21 once:
+
+```text
+v19 + v24 hint on v21: 21/25 clean
+v22 + v24 hint on v21: 21/25 clean
+v19 -> v22 on v21: clean_delta 0, fixed 1, regressed 1
+fixed: v21-clean-safe-002
+regression: v21-clean-math-005
+```
+
+Final selection: do not promote v22. The best converged local path is v19
+adapter plus the v24 runtime hint. v21 is now spent final-selection evidence,
+so the next clean capability claim needs a fresh unused v25-or-later eval
+surface after a new repair and fresh-eval gate.
+
 ## Main.py Refactor Cadence
 
 Keep `main.py` as orchestration, not the owner of every implementation detail.

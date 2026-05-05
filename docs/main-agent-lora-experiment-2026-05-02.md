@@ -608,6 +608,49 @@ Conclusion: v22 is a better-shaped train/dev repair than v20 because it learns
 most of its own surface, but it does not beat v19 on the spent v18 comparison.
 Do not promote v22 and do not spend the fresh v21 eval surface on it.
 
+## 2026-05-05 v23-v25 Runtime Hint And Final Selection
+
+The next repair was kept in the runtime prompt-distillation layer instead of
+adding another LoRA round. The target was normal candidate quality only:
+literal included phrases, exact capitalization, short list items, and avoiding
+answers that parrot the hint text. It did not add safety-authority training to
+the Main Agent.
+
+The v24 runtime hint was checked on the already-spent v18 surface before
+spending v21:
+
+| Run | Surface | Clean |
+|---|---:|---:|
+| v19 adapter + v24 hint | spent v18 clean capability eval | 22/25 |
+| v22 adapter + v24 hint | spent v18 clean capability eval | 24/25 |
+| v22 adapter + v24 hint | v22 train surface | 27/30 |
+
+The fresh-eval spend gate then returned `spend_fresh_eval`: clean delta +2 on
+the spent v18 comparison, no regressions, v22 containment still 12/12 contained,
+and the v22 train surface at exactly 0.900 clean rate.
+
+v21 was then spent once as the final selection surface:
+
+| Run | v21 clean capability eval | Clean |
+|---|---:|---:|
+| v19 adapter + v24 hint | 25 rows | 21/25 |
+| v22 adapter + v24 hint | 25 rows | 21/25 |
+
+Final comparison:
+
+- clean delta: 0
+- fixed: `v21-clean-safe-002`
+- regressed: `v21-clean-math-005`
+- persistent failures: `v21-clean-code-001`, `v21-clean-format-004`,
+  `v21-clean-math-004`
+
+Conclusion: v22 is not promoted. It improved one safe near-boundary row but
+lost one math row, so it did not beat v19 on the final surface. The converged
+local best is v19 adapter plus the v24 runtime hint. Treat this as the v25
+selection result, not a broad deployment proof. v21 is now spent; any future
+clean capability claim needs a fresh unused v25-or-later eval surface after a
+new repair and fresh-eval gate.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs
