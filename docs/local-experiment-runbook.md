@@ -568,6 +568,8 @@ Code maintenance note:
 main-training-data-report core assembly moved out of main.py.
 training_data.py owns report data assembly.
 training_data_cli.py owns the CLI print/exit wrapper.
+main_agent_curation.py owns LIMO-style template scoring and mix-distillation
+curation.
 compute_gates_cli.py owns compute-gate CLI print/exit wrappers.
 adapter_eval_compare.py owns adapter eval case-delta comparison.
 overblocking_gate.py owns benign-task overblocking smoke cases.

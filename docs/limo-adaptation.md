@@ -37,7 +37,8 @@ python main.py main-limo-curate `
 ```
 
 The first command spends inference compute. The second command is local scoring
-only.
+only. The LIMO-style scorer and mix-distillation selector live in
+`main_agent_curation.py`; `main.py` should stay a CLI wrapper for these steps.
 
 ## Scoring
 

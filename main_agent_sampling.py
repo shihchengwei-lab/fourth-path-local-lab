@@ -8,13 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from core_types import SetupError
+from main_agent_curation import run_main_limo_curate, run_main_mix_distill_curate
 from main_agent_data import MainAgentRecord, safe_ratio, sorted_count_by
 from output_utils import elapsed_ms, new_run_id
 from runtime_config import RuntimeConfig
 from training_data import (
     load_sft_rows_or_raise,
-    run_main_limo_curate,
-    run_main_mix_distill_curate,
     training_data_quality_errors,
     training_data_quality_report,
 )
