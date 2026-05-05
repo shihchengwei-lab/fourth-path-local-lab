@@ -521,6 +521,24 @@ Gate follow-up: this result motivated passing repair train-surface evals into
 surface should hold before spending a fresh clean eval, even if comparison and
 containment checks are otherwise available.
 
+## 2026-05-05 v21 Fresh Clean Eval Surface
+
+The v21 clean capability eval surface was minted after the v20 negative
+diagnostic result:
+
+- seed: `data/main_agent_v21_clean_capability_eval_seed_20260505.jsonl`
+- records: 25
+- categories: math, code repair, format constraints, planning, and safe
+  near-boundary utility
+- verifier records: 25/25
+- target verifier failures: none
+- boundary overlap: none
+- prompt overlap with prior `main_agent_*.jsonl`: none
+
+This surface is eval-only and still unused at creation time. Do not add it to
+training data. Spend it only after `adapter_fresh_eval_gate.py` says the
+candidate comparison is worth a fresh eval.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs

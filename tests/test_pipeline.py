@@ -3533,6 +3533,8 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["capability_eval_corpora"]["v12_clean_capability_eval"]["errors"], [])
         self.assertEqual(data["capability_eval_corpora"]["v18_clean_capability_eval"]["total"], 25)
         self.assertEqual(data["capability_eval_corpora"]["v18_clean_capability_eval"]["errors"], [])
+        self.assertEqual(data["capability_eval_corpora"]["v21_clean_capability_eval"]["total"], 25)
+        self.assertEqual(data["capability_eval_corpora"]["v21_clean_capability_eval"]["errors"], [])
         self.assertEqual(data["boundary_clean_capability_eval"]["errors"], [])
         for version in range(6, 19):
             self.assertNotIn(f"v{version}_clean_heldout", data["main_corpora"])
@@ -3550,7 +3552,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(data["capability_claim_quality"]["next_capability_claim_version"], "v21")
         self.assertEqual(
             data["capability_claim_quality"]["next_required"],
-            "use v20 only as repair/dev evidence, then mint a fresh unused v21 capability eval surface before any promotion claim",
+            "v21 is the fresh unused clean capability eval surface; spend it only after the fresh-eval gate passes",
         )
         self.assertEqual(data["capability_claim_quality"]["total_records"], 102)
         self.assertEqual(data["capability_claim_quality"]["total_verifier_records"], 62)
@@ -3640,6 +3642,12 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(
             any(
                 path.endswith("main_agent_v18_clean_capability_eval_seed_20260505.jsonl")
+                for path in data["sft_format"]["source_paths"]
+            )
+        )
+        self.assertFalse(
+            any(
+                path.endswith("main_agent_v21_clean_capability_eval_seed_20260505.jsonl")
                 for path in data["sft_format"]["source_paths"]
             )
         )
@@ -4442,6 +4450,49 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(verifier_failures, {})
         self.assertEqual(boundary_failures, {})
         self.assertFalse(any(record.prompt in known_prompts for record in v18_records))
+
+    def test_main_agent_v21_clean_capability_eval_seed_is_valid_separate_and_boundary_clean(self):
+        from training_boundaries import capability_dev_authority_overlap_issues
+
+        path = main.PROJECT_ROOT / "data" / "main_agent_v21_clean_capability_eval_seed_20260505.jsonl"
+        v21_clean = main.check_main_agent_corpus(path)
+        source_paths = [
+            source_path
+            for source_path in (main.PROJECT_ROOT / "data").glob("main_agent_*.jsonl")
+            if source_path != path
+        ]
+        known_records = []
+        for source_path in source_paths:
+            records, _, _ = main.load_main_agent_records(source_path)
+            known_records.extend(records)
+        known_prompts = {record.prompt for record in known_records}
+        v21_records, _, _ = main.load_main_agent_records(path)
+        verifier_failures = {
+            record.record_id: main.main_verifier_issues(record.target_response, record.verifier)
+            for record in v21_records
+            if main.main_verifier_issues(record.target_response, record.verifier)
+        }
+        boundary_failures = {
+            record.record_id: capability_dev_authority_overlap_issues(
+                {"prompt": record.prompt, "target_response": record.target_response}
+            )
+            for record in v21_records
+            if capability_dev_authority_overlap_issues(
+                {"prompt": record.prompt, "target_response": record.target_response}
+            )
+        }
+
+        self.assertEqual(v21_clean.errors, [])
+        self.assertEqual(v21_clean.total, 25)
+        self.assertEqual(v21_clean.verifier_records, 25)
+        self.assertEqual(v21_clean.categories["v21_clean_math"], 5)
+        self.assertEqual(v21_clean.categories["v21_clean_code_repair"], 5)
+        self.assertEqual(v21_clean.categories["v21_clean_format_constraints"], 5)
+        self.assertEqual(v21_clean.categories["v21_clean_planning"], 5)
+        self.assertEqual(v21_clean.categories["v21_clean_safe_near_boundary"], 5)
+        self.assertEqual(verifier_failures, {})
+        self.assertEqual(boundary_failures, {})
+        self.assertFalse(any(record.prompt in known_prompts for record in v21_records))
 
     def test_main_agent_v10_capability_repair_seed_is_valid_and_separate(self):
         path = main.PROJECT_ROOT / "data" / "main_agent_v10_capability_repair_seed_20260505.jsonl"

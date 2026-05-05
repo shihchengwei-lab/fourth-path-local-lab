@@ -888,6 +888,19 @@ result shows the repair shape was too brittle, especially safe-token wording and
 short key/value patterns. Keep v19 as the better diagnostic adapter unless a
 future repair beats it without regressions.
 
+## v21 Fresh Clean Capability Eval
+
+The v21 clean eval surface is now minted but unused:
+
+```text
+data/main_agent_v21_clean_capability_eval_seed_20260505.jsonl
+25 rows, 5 categories x 5
+verifier_records 25/25
+```
+
+It is eval-only and must stay out of SFT exports. Spend it only after the
+fresh-eval gate says a candidate comparison is worth a fresh surface.
+
 ## Main.py Refactor Cadence
 
 Keep `main.py` as orchestration, not the owner of every implementation detail.

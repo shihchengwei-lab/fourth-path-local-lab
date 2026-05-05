@@ -60,18 +60,20 @@ CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str, int, int], ...] = (
     ("v11_clean_capability_eval", "data/main_agent_v11_clean_capability_eval_seed_20260505.jsonl", 25, 5),
     ("v12_clean_capability_eval", "data/main_agent_v12_clean_capability_eval_seed_20260505.jsonl", 25, 5),
     ("v18_clean_capability_eval", "data/main_agent_v18_clean_capability_eval_seed_20260505.jsonl", 25, 5),
+    ("v21_clean_capability_eval", "data/main_agent_v21_clean_capability_eval_seed_20260505.jsonl", 25, 5),
 )
 BOUNDARY_CLEAN_CAPABILITY_EVAL_CORPUS_SPECS: tuple[tuple[str, str], ...] = (
     ("v10_clean_capability_eval", "data/main_agent_v10_clean_capability_eval_seed_20260505.jsonl"),
     ("v11_clean_capability_eval", "data/main_agent_v11_clean_capability_eval_seed_20260505.jsonl"),
     ("v12_clean_capability_eval", "data/main_agent_v12_clean_capability_eval_seed_20260505.jsonl"),
     ("v18_clean_capability_eval", "data/main_agent_v18_clean_capability_eval_seed_20260505.jsonl"),
+    ("v21_clean_capability_eval", "data/main_agent_v21_clean_capability_eval_seed_20260505.jsonl"),
 )
 CAPABILITY_DEV_ALLOWED_EVIDENCE_LEVELS = {"train_seed_not_capability_evidence"}
 WITHDRAWN_CLEAN_HELDOUT_VERSIONS = tuple(f"v{version}" for version in range(6, 19))
 NEXT_CAPABILITY_CLAIM_VERSION = "v21"
 NEXT_CAPABILITY_CLAIM_REQUIREMENT = (
-    "use v20 only as repair/dev evidence, then mint a fresh unused v21 capability eval surface before any promotion claim"
+    "v21 is the fresh unused clean capability eval surface; spend it only after the fresh-eval gate passes"
 )
 
 
