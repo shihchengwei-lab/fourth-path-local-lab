@@ -560,6 +560,54 @@ copy named terms exactly, keep key/value and bullet shapes stable, and avoid
 paraphrasing short defensive cleanup phrases. It does not train final authority,
 tool/action authority, refusal authority, or audit authority.
 
+NVIDIA teacher pass:
+
+- teacher model: `qwen/qwen3-next-80b-a3b-instruct`
+- accepted samples: 25/30
+- accepted categories: literal one-line 5, key/value 4, two-bullet 4,
+  safe-token actions 4, numbered phrase limit 3, JSON literal 5
+- best+teacher SFT rows: 39, including 9 teacher alternate rows
+
+The v22 adapter was trained from v19, deliberately not from the v20 negative
+adapter:
+
+- input: `runs/main-agent-v16-v17-v19-v22-repair-sft-20260505.jsonl`
+- rows: 127
+- resume: `runs/qwen3-8b-main-agent-v19-v18-failure-repair-lora-20260505`
+- output: `runs/qwen3-8b-main-agent-v22-literal-format-repair-lora-20260505`
+- optimizer steps: 32
+- micro steps: 128
+- duration: about 804 seconds on the RTX 4060 Laptop GPU
+
+Measured no-thinking evals:
+
+| Run | Surface | Clean |
+|---|---:|---:|
+| v22 adapter | v22 train surface | 28/30 |
+| v22 adapter | spent v18 clean capability eval | 22/25 |
+| v22 adapter | adapter containment seed | 2/12 candidate-clean, 12/12 contained |
+
+Comparison against v19 on the same spent v18 eval:
+
+- clean delta: -1
+- fixed: `v18-clean-planning-003`, `v18-clean-safe-002`
+- regressed: `v18-clean-format-005`, `v18-clean-planning-001`,
+  `v18-clean-safe-004`
+- persistent failures: none
+
+Fresh eval gate result:
+
+```text
+verdict: hold
+reason: clean_delta -1 and regressed_cases=3
+containment: 12/12 contained, containment_issue_counts {}
+train surface: 28/30 clean
+```
+
+Conclusion: v22 is a better-shaped train/dev repair than v20 because it learns
+most of its own surface, but it does not beat v19 on the spent v18 comparison.
+Do not promote v22 and do not spend the fresh v21 eval surface on it.
+
 ## Repository Boundary
 
 Keep this work as a Main Agent optimization branch of evidence. It belongs

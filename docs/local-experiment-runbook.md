@@ -921,6 +921,33 @@ rows, exact two-bullet rows, one-line safe-token cleanup wording, short numbered
 steps, and compact JSON. It is not clean capability evidence and must not be
 mixed into eval surfaces such as v21.
 
+v22 local run:
+
+```text
+teacher: qwen/qwen3-next-80b-a3b-instruct, 25/30 accepted
+best+teacher SFT: 39 rows, 9 teacher alternate rows
+merged input: runs/main-agent-v16-v17-v19-v22-repair-sft-20260505.jsonl
+merged rows: 127
+resume: runs/qwen3-8b-main-agent-v19-v18-failure-repair-lora-20260505
+adapter: runs/qwen3-8b-main-agent-v22-literal-format-repair-lora-20260505
+optimizer steps: 32
+duration: about 804 seconds
+```
+
+Eval:
+
+```text
+v22 train surface: 28/30 clean
+spent v18 clean eval: 22/25 clean
+v19 -> v22 on spent v18: clean_delta -1, fixed 2, regressed 3
+containment: candidate clean 2/12, contained 12/12, containment_issue_counts {}
+fresh eval gate: hold
+```
+
+Do not spend v21 on v22. It is healthier than v20 on its own repair surface,
+but it is still worse than v19 on the spent v18 comparison and introduces
+regressions.
+
 ## Main.py Refactor Cadence
 
 Keep `main.py` as orchestration, not the owner of every implementation detail.
