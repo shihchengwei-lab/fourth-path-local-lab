@@ -39,6 +39,11 @@ The `main` target is the fairest comparison for capability claims. The
 `pipeline` target answers whether the full product path preserves benchmark
 answers after audit.
 
+For the final raw/split and base/adapter closure matrix, use
+[`closure-benchmark-plan.md`](closure-benchmark-plan.md). That plan defines
+`A0 = raw B8`, `A1 = split B8`, `A2 = raw B8 + adapter`, and
+`A3 = split B8 + adapter` without adding a pass/fail threshold.
+
 ## Task Tiers
 
 Start small, then expand.
