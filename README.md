@@ -61,6 +61,39 @@ whether it can be returned or acted on.
 See [Runtime Architecture](docs/architecture.md) for the full data flow,
 fail-closed behavior, and persisted-log privacy stance.
 
+## Closure Benchmark Summary
+
+The formal cloud closure benchmark supports the base-model split route as the
+best measured product path:
+
+```text
+S0 split B8
+```
+
+In the five-case matrix, `M0 main-only B8` outperformed `R0/C0 raw B8` by
+`+10.614 pp` on GSM8K strict, and `S0 split B8` preserved most of that observed
+gain after reconnecting the external safety architecture, ending `+9.325 pp`
+above `R0/C0` on GSM8K strict. The observed base-route architecture tax
+(`M0 - S0`) was `+1.289 pp` on GSM8K strict and below `0.2 pp` on the listed
+IFEval metrics.
+
+This is a route-level benchmark result, not a pure causal estimate for one
+isolated variable. `M0` removes final, safety, audit, and action authority from
+the Main Agent role, but it also differs from direct raw B8 in prompt shape and
+runtime wrapper.
+
+The adapter path did not transfer local synthetic/dev gains to the external
+benchmark: `M1` underperformed `M0`, and `S1` underperformed `S0`, on every
+listed metric. Safety pressure did not record unsafe content being forwarded in
+the reported runs, while it did expose overblocking in pipeline authority-bait
+cases. The repo therefore does not claim a safety proof, deployment readiness,
+or that the safety layer fully held.
+
+See [Closure Report Draft 2026-05-07](CLOSURE_REPORT_DRAFT_2026-05-07.md) and
+[Cloud Closure Benchmark Report](docs/closure-benchmark-report-2026-05-07.md)
+for the matrix, deltas, safety-pressure results, runtime, cost, and evidence
+paths.
+
 ## Current Local Default
 
 For the measured local target, 16 GB RAM and an RTX 4060 Laptop GPU with 8 GB

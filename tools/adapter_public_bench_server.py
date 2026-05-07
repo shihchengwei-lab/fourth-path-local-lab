@@ -5,6 +5,7 @@ import json
 import re
 import sys
 import time
+from dataclasses import replace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -75,11 +76,34 @@ def generation_kwargs_from_options(
     return kwargs
 
 
-def request_model_options(request: dict[str, Any], default_max_new_tokens: int) -> main.ModelOptions:
+def load_adapter_tokenizer(auto_tokenizer: Any, model_name: str, adapter_dir: Path | None) -> Any:
+    if adapter_dir is None:
+        return auto_tokenizer.from_pretrained(model_name)
+    try:
+        return auto_tokenizer.from_pretrained(adapter_dir)
+    except (AttributeError, TypeError, ValueError) as exc:
+        sys.stderr.write(
+            "[adapter-public-bench] adapter tokenizer load failed; "
+            f"falling back to base tokenizer: {type(exc).__name__}: {exc}\n"
+        )
+        tokenizer = auto_tokenizer.from_pretrained(model_name)
+        chat_template = adapter_dir / "chat_template.jinja"
+        if chat_template.exists():
+            tokenizer.chat_template = chat_template.read_text(encoding="utf-8")
+        return tokenizer
+
+
+def request_model_options(
+    request: dict[str, Any],
+    default_max_new_tokens: int,
+    max_request_tokens: int | None = None,
+) -> main.ModelOptions:
     updates: dict[str, Any] = {"num_predict": default_max_new_tokens}
     max_tokens = request.get("max_tokens")
     if isinstance(max_tokens, int) and max_tokens > 0:
         updates["num_predict"] = max_tokens
+    if max_request_tokens and max_request_tokens > 0:
+        updates["num_predict"] = min(int(updates["num_predict"]), max_request_tokens)
     temperature = request.get("temperature")
     if isinstance(temperature, (int, float)):
         updates["temperature"] = float(temperature)
@@ -87,6 +111,27 @@ def request_model_options(request: dict[str, Any], default_max_new_tokens: int) 
     if isinstance(top_p, (int, float)):
         updates["top_p"] = float(top_p)
     return main.ModelOptions(**updates)
+
+
+def request_stop_strings(request: dict[str, Any]) -> list[str]:
+    stop = request.get("stop")
+    values: list[str] = []
+    if isinstance(stop, str):
+        values.append(stop)
+    elif isinstance(stop, list):
+        values.extend(item for item in stop if isinstance(item, str))
+    return [value for value in values if value]
+
+
+def trim_stop_strings(text: str, stop_strings: list[str]) -> str:
+    cut_at: int | None = None
+    for stop in stop_strings:
+        index = text.find(stop)
+        if index >= 0:
+            cut_at = index if cut_at is None else min(cut_at, index)
+    if cut_at is None:
+        return text
+    return text[:cut_at]
 
 
 class HfAdapterChatClient:
@@ -97,12 +142,14 @@ class HfAdapterChatClient:
         model: Any,
         torch_module: Any,
         default_max_new_tokens: int,
+        max_request_tokens: int | None,
         enable_thinking: bool,
     ) -> None:
         self.tokenizer = tokenizer
         self.model = model
         self.torch = torch_module
         self.default_max_new_tokens = default_max_new_tokens
+        self.max_request_tokens = max_request_tokens
         self.enable_thinking = enable_thinking
         self.last_stats: dict[str, int] | None = None
 
@@ -114,6 +161,7 @@ class HfAdapterChatClient:
         adapter_dir: Path | None,
         load_4bit: bool,
         default_max_new_tokens: int,
+        max_request_tokens: int | None,
         enable_thinking: bool,
     ) -> HfAdapterChatClient:
         import torch
@@ -130,8 +178,7 @@ class HfAdapterChatClient:
                 bnb_4bit_use_double_quant=True,
             )
 
-        tokenizer_source = adapter_dir if adapter_dir else model_name
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_source)
+        tokenizer = load_adapter_tokenizer(AutoTokenizer, model_name, adapter_dir)
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             quantization_config=quantization_config,
@@ -146,6 +193,7 @@ class HfAdapterChatClient:
             model=model,
             torch_module=torch,
             default_max_new_tokens=default_max_new_tokens,
+            max_request_tokens=max_request_tokens,
             enable_thinking=enable_thinking,
         )
 
@@ -162,19 +210,37 @@ class HfAdapterChatClient:
         keep_alive: str | None = None,
         response_format: str | dict[str, Any] | None = None,
     ) -> str:
+        effective_options = options or main.ModelOptions()
+        if self.max_request_tokens and self.max_request_tokens > 0:
+            requested_tokens = (
+                effective_options.num_predict
+                if effective_options.num_predict and effective_options.num_predict > 0
+                else self.default_max_new_tokens
+            )
+            effective_options = replace(effective_options, num_predict=min(requested_tokens, self.max_request_tokens))
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ]
         return self.generate_messages(
             messages,
-            options=options,
+            options=effective_options,
             enable_thinking=self.enable_thinking if think is None else bool(think),
         )
 
     def raw_chat(self, messages: list[dict[str, str]], request: dict[str, Any]) -> str:
-        options = request_model_options(request, self.default_max_new_tokens)
-        return self.generate_messages(messages, options=options, enable_thinking=self.enable_thinking)
+        options = request_model_options(
+            request,
+            self.default_max_new_tokens,
+            self.max_request_tokens,
+        )
+        stop_strings = request_stop_strings(request)
+        return self.generate_messages(
+            messages,
+            options=options,
+            enable_thinking=self.enable_thinking,
+            stop_strings=stop_strings,
+        )
 
     def generate_messages(
         self,
@@ -182,6 +248,7 @@ class HfAdapterChatClient:
         *,
         options: main.ModelOptions | None,
         enable_thinking: bool,
+        stop_strings: list[str] | None = None,
     ) -> str:
         prompt_text = chat_template_text(self.tokenizer, messages, enable_thinking=enable_thinking)
         inputs = self.tokenizer(prompt_text, return_tensors="pt")
@@ -189,12 +256,28 @@ class HfAdapterChatClient:
             inputs = inputs.to(self.model.device)
         input_len = int(inputs["input_ids"].shape[1])
         kwargs = generation_kwargs_from_options(options, fallback_max_new_tokens=self.default_max_new_tokens)
-        if getattr(self.tokenizer, "eos_token_id", None) is not None and "pad_token_id" not in kwargs:
+        if getattr(self.tokenizer, "eos_token_id", None) is not None:
+            kwargs["eos_token_id"] = self.tokenizer.eos_token_id
+        if getattr(self.tokenizer, "pad_token_id", None) is not None and "pad_token_id" not in kwargs:
+            kwargs["pad_token_id"] = self.tokenizer.pad_token_id
+        elif getattr(self.tokenizer, "eos_token_id", None) is not None and "pad_token_id" not in kwargs:
             kwargs["pad_token_id"] = self.tokenizer.eos_token_id
+        effective_stop_strings = list(stop_strings or [])
+        eos_token = getattr(self.tokenizer, "eos_token", None)
+        if isinstance(eos_token, str) and eos_token:
+            effective_stop_strings.append(eos_token)
+        if effective_stop_strings:
+            kwargs["stop_strings"] = sorted(set(effective_stop_strings))
+            kwargs["tokenizer"] = self.tokenizer
         with self.torch.no_grad():
             generated = self.model.generate(**inputs, **kwargs)
         output_len = int(generated[0].shape[0]) - input_len
-        raw_answer = self.tokenizer.decode(generated[0][input_len:], skip_special_tokens=True).strip()
+        raw_answer = self.tokenizer.decode(generated[0][input_len:], skip_special_tokens=False)
+        raw_answer = trim_stop_strings(raw_answer, effective_stop_strings)
+        raw_answer = self.tokenizer.decode(
+            self.tokenizer(raw_answer, add_special_tokens=False)["input_ids"],
+            skip_special_tokens=True,
+        ).strip()
         self.last_stats = {"prompt_tokens": input_len, "eval_tokens": max(0, output_len)}
         answer = strip_qwen_think(raw_answer)
         if not answer:
@@ -225,6 +308,19 @@ class AdapterBenchmarkState:
             if self.mode == "raw":
                 return self.client.raw_chat(messages, request)
             runtime = public_bench.override_main_options_for_request(self.runtime, request)
+            if self.mode == "main":
+                generation = main.generate_candidate_result(
+                    client=self.client,
+                    runtime=runtime.main,
+                    user_prompt=prompt,
+                    revision=None,
+                    quality_refine_passes=runtime.quality_refine_passes,
+                    search_candidates=runtime.search_candidates,
+                    local_select=runtime.local_select,
+                    adaptive_compute=runtime.adaptive_compute,
+                )
+                return generation.text
+
             result = main.run_pipeline(
                 prompt=prompt,
                 client=self.client,
@@ -299,18 +395,19 @@ class AdapterBenchHandler(BaseHTTPRequestHandler):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="OpenAI-compatible benchmark wrapper for raw HF adapter and split pipeline adapter runs."
+        description="OpenAI-compatible benchmark wrapper for raw, main-only, and split pipeline HF adapter runs."
     )
     parser.add_argument("--model", required=True, help="Base Hugging Face model id or path.")
     parser.add_argument("--adapter-dir", default=None, help="Optional PEFT adapter directory.")
     parser.add_argument("--profile", choices=sorted(main.RUNTIME_PROFILES), default="qwen3-8b-local-max")
-    parser.add_argument("--mode", choices=("raw", "pipeline"), default="raw")
+    parser.add_argument("--mode", choices=("raw", "main", "pipeline"), default="raw")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8010)
     parser.add_argument("--model-alias", help="Model id exposed to benchmark clients. Default: mode-specific alias.")
     parser.add_argument("--canon", default=str(PROJECT_ROOT / "canon.md"))
     parser.add_argument("--runs-dir", default=str(PROJECT_ROOT / "runs" / "closure-bench-audit"))
     parser.add_argument("--default-max-new-tokens", type=int, default=512)
+    parser.add_argument("--max-request-tokens", type=int, default=0)
     parser.add_argument("--enable-thinking", action="store_true")
     parser.add_argument("--no-4bit", action="store_true")
     return parser
@@ -327,9 +424,16 @@ def serve(args: argparse.Namespace) -> None:
         adapter_dir=adapter_dir,
         load_4bit=not args.no_4bit,
         default_max_new_tokens=args.default_max_new_tokens,
+        max_request_tokens=args.max_request_tokens if args.max_request_tokens > 0 else None,
         enable_thinking=args.enable_thinking,
     )
-    alias = args.model_alias or ("adapter-raw" if args.mode == "raw" else f"{args.profile}-adapter-pipeline")
+    alias = args.model_alias or (
+        "adapter-raw"
+        if args.mode == "raw"
+        else "adapter-main"
+        if args.mode == "main"
+        else f"{args.profile}-adapter-pipeline"
+    )
     AdapterBenchHandler.state = AdapterBenchmarkState(
         runtime=runtime_for_profile(args.profile),
         client=client,

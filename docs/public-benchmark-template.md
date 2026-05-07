@@ -39,10 +39,15 @@ The `main` target is the fairest comparison for capability claims. The
 `pipeline` target answers whether the full product path preserves benchmark
 answers after audit.
 
-For the final raw/split and base/adapter closure matrix, use
-[`closure-benchmark-plan.md`](closure-benchmark-plan.md). That plan defines
-`A0 = raw B8`, `A1 = split B8`, `A2 = raw B8 + adapter`, and
-`A3 = split B8 + adapter` without adding a pass/fail threshold.
+For capability-tax claims, prefer main-only candidate targets over full pipeline
+targets. Pipeline targets answer product-path preservation and containment
+questions, not pure candidate capability.
+
+For the final closure matrix, use
+[`closure-benchmark-plan.md`](closure-benchmark-plan.md) and
+[`cloud-closure-benchmark-runbook.md`](cloud-closure-benchmark-runbook.md).
+The formal matrix uses R0/C0 as one direct raw B8 run, plus M0/S0/M1/S1. It
+should be run on cloud GPU, not on the local 8 GB laptop GPU.
 
 ## Task Tiers
 

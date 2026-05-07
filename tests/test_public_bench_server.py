@@ -1,6 +1,7 @@
 import importlib.util
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 SERVER_PATH = Path(__file__).resolve().parents[1] / "tools" / "public_bench_server.py"
@@ -66,6 +67,32 @@ class PublicBenchServerTests(unittest.TestCase):
         )
 
         self.assertEqual(state.generate("Question: 1+1?\nAnswer:", {"max_tokens": 256}), "")
+
+    def test_main_state_returns_candidate_without_pipeline_verdict(self):
+        class FakeClient:
+            pass
+
+        runtime = public_bench_server.main.RUNTIME_PROFILES["qwen3-8b-s2t-lite"]
+        generation = public_bench_server.main.CandidateGeneration("candidate answer", {}, 1)
+        state = public_bench_server.BenchmarkState(
+            runtime=runtime,
+            client=FakeClient(),
+            mode="main",
+            model_alias="A4",
+            canon="C1\nC2\nC3",
+            runs_dir=Path("runs"),
+        )
+
+        with patch.object(public_bench_server.main, "run_pipeline") as run_pipeline, patch.object(
+            public_bench_server.main,
+            "generate_candidate_result",
+            return_value=generation,
+        ) as generate_candidate_result:
+            result = state.generate("Solve 2+2.", {"max_tokens": 16})
+
+        self.assertEqual(result, "candidate answer")
+        run_pipeline.assert_not_called()
+        generate_candidate_result.assert_called_once()
 
 
 if __name__ == "__main__":

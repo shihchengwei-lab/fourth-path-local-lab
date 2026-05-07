@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("A0", "A1", "A2", "A3", "all")]
+    [ValidateSet("A0", "A1", "A2", "A3", "A4", "A5", "all", "closure-plus-main")]
     [string]$Case = "all",
 
     [string]$Tasks = "ifeval,gsm8k",
@@ -13,14 +13,20 @@ param(
     [string]$AdapterPython = ".\.venv-lora\Scripts\python.exe",
     [string]$OutputRoot = "runs\closure-bench",
     [int]$ServerWarmupSeconds = 5,
+    [int]$AdapterMaxRequestTokens = 0,
     [switch]$NoLimit,
     [switch]$PreflightOnly,
     [switch]$AdapterNo4bit,
-    [switch]$EnableThinking
+    [switch]$EnableThinking,
+    [switch]$AllowCodeEval
 )
 
 $ErrorActionPreference = "Stop"
 $env:PYTHONIOENCODING = "utf-8"
+$env:PYTHONUNBUFFERED = "1"
+if ($AllowCodeEval) {
+    $env:HF_ALLOW_CODE_EVAL = "1"
+}
 
 $repo = Split-Path -Parent $PSScriptRoot
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -73,7 +79,7 @@ function Resolve-AdapterDirectory {
         return $explicit
     }
 
-    throw "AdapterDir is required for A2/A3. The default is the best local candidate, not the newest adapter."
+    throw "AdapterDir is required for A2/A3/A5. The default is the best local candidate, not the newest adapter."
 }
 
 function Invoke-LmEvalRun {
@@ -96,6 +102,9 @@ function Invoke-LmEvalRun {
     )
     if (-not $NoLimit) {
         $cmd += @("--limit", "$Limit")
+    }
+    if ($AllowCodeEval) {
+        $cmd += "--confirm_run_unsafe_code"
     }
 
     Write-Host "Running $Name"
@@ -160,6 +169,9 @@ function Start-AdapterBenchServer {
     if ($AdapterNo4bit) {
         $serverArgs += "--no-4bit"
     }
+    if ($AdapterMaxRequestTokens -gt 0) {
+        $serverArgs += @("--max-request-tokens", "$AdapterMaxRequestTokens")
+    }
     if ($EnableThinking) {
         $serverArgs += "--enable-thinking"
     }
@@ -198,6 +210,7 @@ function Write-PreflightSummary {
         split_profile = $SplitProfile
         hf_model = $HfModel
         adapter_dir = $ResolvedAdapterDir
+        adapter_max_request_tokens = if ($AdapterMaxRequestTokens -gt 0) { $AdapterMaxRequestTokens } else { $null }
         output_root = $outputRootPath
         benchmark_python = $Python
         adapter_python = $AdapterPython
@@ -210,7 +223,10 @@ $outputRootPath = Resolve-RepoPath $OutputRoot
 
 New-Item -ItemType Directory -Force -Path $outputRootPath | Out-Null
 Test-LmEval
-$needsAdapter = $Case -eq "A2" -or $Case -eq "A3" -or $Case -eq "all"
+$needsAdapter = $Case -eq "A2" -or $Case -eq "A3" -or $Case -eq "A5" -or $Case -eq "closure-plus-main"
+if ($Case -eq "all") {
+    $needsAdapter = $true
+}
 if ($needsAdapter) {
     Test-PythonCommand -Command $AdapterPython -Label "Adapter Python"
     $resolvedAdapterDir = Resolve-AdapterDirectory
@@ -225,24 +241,36 @@ if ($PreflightOnly) {
     exit 0
 }
 
-if ($Case -eq "A0" -or $Case -eq "all") {
+if ($Case -eq "A0" -or $Case -eq "all" -or $Case -eq "closure-plus-main") {
     Invoke-LmEvalRun -Name "A0-raw-b8" -ModelName $RawModel -BaseUrl "http://localhost:11434/v1/chat/completions"
 }
 
-if ($Case -eq "A1" -or $Case -eq "all") {
+if ($Case -eq "A1" -or $Case -eq "all" -or $Case -eq "closure-plus-main") {
     Invoke-WithServer `
         -StartBlock { Start-PublicBenchServer -Mode "pipeline" -Alias "A1-split-b8" } `
         -RunBlock { Invoke-LmEvalRun -Name "A1-split-b8" -ModelName "A1-split-b8" -BaseUrl "http://127.0.0.1:$Port/v1/chat/completions" }
 }
 
-if ($Case -eq "A2" -or $Case -eq "all") {
+if ($Case -eq "A2" -or $Case -eq "all" -or $Case -eq "closure-plus-main") {
     Invoke-WithServer `
         -StartBlock { Start-AdapterBenchServer -Mode "raw" -Alias "A2-raw-b8-adapter" -ResolvedAdapterDir $resolvedAdapterDir } `
         -RunBlock { Invoke-LmEvalRun -Name "A2-raw-b8-adapter" -ModelName "A2-raw-b8-adapter" -BaseUrl "http://127.0.0.1:$Port/v1/chat/completions" }
 }
 
-if ($Case -eq "A3" -or $Case -eq "all") {
+if ($Case -eq "A3" -or $Case -eq "all" -or $Case -eq "closure-plus-main") {
     Invoke-WithServer `
         -StartBlock { Start-AdapterBenchServer -Mode "pipeline" -Alias "A3-split-b8-adapter" -ResolvedAdapterDir $resolvedAdapterDir } `
         -RunBlock { Invoke-LmEvalRun -Name "A3-split-b8-adapter" -ModelName "A3-split-b8-adapter" -BaseUrl "http://127.0.0.1:$Port/v1/chat/completions" }
+}
+
+if ($Case -eq "A4" -or $Case -eq "closure-plus-main") {
+    Invoke-WithServer `
+        -StartBlock { Start-PublicBenchServer -Mode "main" -Alias "A4-main-only-b8" } `
+        -RunBlock { Invoke-LmEvalRun -Name "A4-main-only-b8" -ModelName "A4-main-only-b8" -BaseUrl "http://127.0.0.1:$Port/v1/chat/completions" }
+}
+
+if ($Case -eq "A5" -or $Case -eq "closure-plus-main") {
+    Invoke-WithServer `
+        -StartBlock { Start-AdapterBenchServer -Mode "main" -Alias "A5-main-only-b8-adapter" -ResolvedAdapterDir $resolvedAdapterDir } `
+        -RunBlock { Invoke-LmEvalRun -Name "A5-main-only-b8-adapter" -ModelName "A5-main-only-b8-adapter" -BaseUrl "http://127.0.0.1:$Port/v1/chat/completions" }
 }
